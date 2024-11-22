@@ -5,7 +5,7 @@ import pandas as pd
 ##########################################################################################################################
 ###################################################### DATA LOADING ######################################################
 ##########################################################################################################################
-def load_controal_charg_dataset(filepath):
+def load_control_chart_dataset(filepath):
     """
     Charge un dataset ASCII de séries temporelles, ajoute les labels et des noms explicites pour chaque série.
     
@@ -37,6 +37,35 @@ def load_controal_charg_dataset(filepath):
     data["Label"] = labels
     
     return data
+
+def load_CBF_dataset(path_test, path_train):
+    """
+    Charge les jeux de données d'entraînement et de test à partir de fichiers CSV délimités par des espaces.
+    
+    Arguments:
+    - path_train (str): Chemin vers le fichier de données d'entraînement.
+    - path_test (str): Chemin vers le fichier de données de test.
+    
+    Retourne:
+    - cbf_df_train (DataFrame): DataFrame pour le jeu d'entraînement avec des labels entiers.
+    - cbf_df_test (DataFrame): DataFrame pour le jeu de test avec des labels entiers.
+    """
+    
+    # Chargement du fichier d'entraînement
+    cbf_df_train = pd.read_csv(path_train, header=None, delim_whitespace=True)
+    cbf_df_train.index = cbf_df_train.index.astype(int)  # Conversion de l'index en int
+    cbf_df_train.rename(columns={0: 'labels'}, inplace=True)  # Renommage de la colonne 0 en 'labels'
+    cbf_df_train['labels'] = cbf_df_train['labels'].astype(int)  # Conversion des labels en int
+
+    # Chargement du fichier de test
+    cbf_df_test = pd.read_csv(path_test, header=None, delim_whitespace=True)
+    cbf_df_test.index = cbf_df_test.index.astype(int)  # Conversion de l'index en int
+    cbf_df_test.rename(columns={0: 'labels'}, inplace=True)  # Renommage de la colonne 0 en 'labels'
+    cbf_df_test['labels'] = cbf_df_test['labels'].astype(int)  # Conversion des labels en int  
+
+    # Retour des DataFrames d'entraînement et de test
+    return cbf_df_train, cbf_df_test
+
 
 def sax_transform(time_series, alphabet_size=5, segments=4):
     """
