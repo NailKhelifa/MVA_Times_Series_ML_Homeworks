@@ -91,11 +91,24 @@ class SAX_transform:
         paa_representation = [np.mean(segment) for segment in segments]
         return paa_representation
 
+    def esax_paa_min_max(self, ts):
+        """
+        Perform Piecewise Aggregate Approximation (PAA) on a time series.
+        Args:
+            ts (array-like): Input time series.
+            num_segments (int): Number of segments.
+        Returns:
+            list: PAA representation as the mean values of each segment.
+        """
+        segments = self.segment_time_series(ts)
+        esax_paa_representation = [[np.min(segment), np.mean(segment), np.max(segment)] for segment in segments]
+
+        return esax_paa_representation
     ###################################### SAX ######################################
 
-    def calculate_sax(self):
+    def calculate_esax(self):
         """
-        Compute the SAX representation of a time series.
+        Compute the ESAX representation of a time series.
         Args:
             ts (array-like): Input time series.
             num_segments (int): Number of segments.
@@ -119,6 +132,34 @@ class SAX_transform:
                 sax_representation += chr(97 + self.alphabet_size - 1)  # Last symbol
 
         return sax_representation
+
+    def calculate_sax(self):
+        """
+        Compute the SAX representation of a time series.
+        Args:
+            ts (array-like): Input time series.
+            num_segments (int): Number of segments.
+        Returns:
+            str: SAX representation as a string of symbols.
+        """
+        # Step 1: Perform PAA
+        paa_representation = self.esax_paa_min_max(self.normalized_series)
+
+        # Step 3: Determine breakpoints based on Gaussian distribution
+        breakpoints = norm.ppf(np.linspace(0, 1, self.alphabet_size + 1)[1:-1])
+
+        # Step 4: Map PAA coefficients to symbols
+        esax_representation = ''
+        for value in paa_representation:
+            for value2 in value:
+                for i, bp in enumerate(breakpoints):
+                    if value2 < bp:
+                        esax_representation += chr(97 + i)  # Map to 'a', 'b', ...
+                        break
+                else:
+                    esax_representation += chr(97 + self.alphabet_size - 1)  # Last symbol
+
+        return esax_representation
 
     ###################################### 1d-SAX ######################################
 
@@ -161,57 +202,6 @@ class SAX_transform:
 
     ###################################### TVA ######################################
 
-    def calculate_trends(self):
-        """
-        Compute the trend-based approximation of a time series using least squares.
-        Args:
-            ts (array-like): Input time series.
-            num_segments (int): Number of segments.
-        Returns:
-            str: Trend representation as a string of 'U', 'D', or 'S'.
-        """
-
-        trend_representation = ''
-
-        for segment in self.segments:
-            x = np.arange(len(segment))
-            y = np.array(segment)
-            # Fit a line using least squares
-            coeffs = np.polyfit(x, y, 1)  # Linear fit (degree=1)
-            slope = coeffs[0]
-
-            # Determine trend character
-            if slope > 0:
-                trend_representation += 'U'  # Upward trend
-            elif slope < 0:
-                trend_representation += 'D'  # Downward trend
-            else:
-                trend_representation += 'S'  # Stable trend
-
-        return trend_representation
-    
-    def calculate_tva(self, alphabet_size):
-        """
-        Compute the TVA representation by combining SAX and trend-based approximations.
-        Args:
-            ts (array-like): Input time series.
-            num_segments (int): Number of segments.
-            alphabet_size (int): Number of symbols in the SAX alphabet.
-        Returns:
-            str: TVA representation as a mixed string of SAX values (lowercase) and trends (uppercase).
-        """
-        # Calculate SAX representation
-        sax_rep = self.calculate_sax(alphabet_size)
-
-        # Calculate trend representation
-        trend_rep = self.calculate_trends()
-
-        # Combine SAX and trend representations
-        tva_representation = ''.join(
-            trend_rep[i] + sax_rep[i] for i in range(len(sax_rep))
-        )
-
-        return tva_representation
     
 ##########################################################################################################################
 ######################################################### SYMBOL ##########################################################

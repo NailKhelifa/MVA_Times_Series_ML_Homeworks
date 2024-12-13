@@ -15,9 +15,6 @@ from sklearn.metrics import roc_curve, auc
 
 
 
-
-
-
 class SAX_KNN:
 
     def __init__(self, X_train, X_test, k=5, num_segments=20, alphabet_size=16):
