@@ -3,6 +3,19 @@ from distances import MINDIST
 import numpy as np
 import pandas as pd
 from collections import Counter
+##Packages KNN_DTW
+from dtw import dtw
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import make_scorer, f1_score
+from tslearn.neighbors import KNeighborsTimeSeriesClassifier
+from tslearn.utils import to_time_series_dataset
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import precision_recall_curve, average_precision_score
+from sklearn.metrics import roc_curve, auc
+
+
+
+
 
 
 class SAX_KNN:
