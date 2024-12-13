@@ -15,10 +15,11 @@ from sklearn.metrics import roc_curve, auc
 
 
 
-class SAX_KNN:
+class SYMBOLS():
 
-    def __init__(self, X_train, X_test, k=5, num_segments=20, alphabet_size=16):
+    def __init__(self, X_train, X_test, method='SAX', k=1, num_segments=20, alphabet_size=16):
         self.k = k # number of neighbors for the prediction 
+        self.method = method
         self.X_train = X_train
         self.X_test = X_test
         self.num_train_samples, self.train_ts_length = X_train.shape
@@ -47,8 +48,11 @@ class SAX_KNN:
             
             # Transformation SAX
             sax_trans = SAX_transform(ts, self.num_segments, self.alphabet_size)
-            symbolic_seq = sax_trans.calculate_sax()
-            
+            if self.method == "SAX":
+                symbolic_seq = sax_trans.calculate_sax()
+            elif self.method == "ESAX":
+                symbolic_seq = sax_trans.calculate_esax()
+
             # Vérifier que la longueur de symbolic_seq correspond à num_segments
             if len(symbolic_seq) != self.num_segments:
                 raise ValueError(f"La longueur de symbolic_seq ({len(symbolic_seq)}) "
@@ -59,11 +63,14 @@ class SAX_KNN:
 
         ## symbolize the test time series 
         for i in range(self.num_test_samples):
-            ts = self.x_train.iloc[i, :]
+            ts = self.x_test.iloc[i, :]
             
             # Transformation SAX
             sax_trans = SAX_transform(ts, self.num_segments, self.alphabet_size)
-            symbolic_seq = sax_trans.calculate_sax()
+            if self.method == "SAX":
+                symbolic_seq = sax_trans.calculate_sax()
+            elif self.method == "ESAX":
+                symbolic_seq = sax_trans.calculate_esax()
             
             # Vérifier que la longueur de symbolic_seq correspond à num_segments
             if len(symbolic_seq) != self.num_segments:
