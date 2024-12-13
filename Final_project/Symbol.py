@@ -121,3 +121,5 @@ class SAX_KNN:
         self.accuracy = np.mean(predictions == self.y_test)
         
         print(f"Accuracy:{self.accuracy}")
+
+
