@@ -106,7 +106,7 @@ class SAX_transform:
         return esax_paa_representation
     ###################################### SAX ######################################
 
-    def calculate_esax(self):
+    def calculate_sax(self):
         """
         Compute the ESAX representation of a time series.
         Args:
@@ -133,7 +133,7 @@ class SAX_transform:
 
         return sax_representation
 
-    def calculate_sax(self):
+    def calculate_esax(self):
         """
         Compute the SAX representation of a time series.
         Args:
