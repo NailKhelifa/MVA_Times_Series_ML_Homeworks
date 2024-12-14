@@ -3,6 +3,10 @@ import scipy.stats as stats # for the breakpoints in SAX
 import pandas as pd
 from scipy.stats import norm
 import math
+import ruptures as rpt
+#from sklearn.base import BaseEstimator
+#from sklearn.utils import Bunch
+
 
 def compute_linear_regression(t, v):
     """
@@ -336,7 +340,6 @@ class SAX_transform:
 
         return reconstructed_series
 
-
     
 ##########################################################################################################################
 ###################################################### TSAX utils ########################################################
@@ -498,4 +501,3 @@ def map_angles_to_symbols(angles, angle_breakpoints_length):
 
     # Retourner la chaîne des symboles
     return f"{symbol1}{symbol2}{symbol3}"
-
