@@ -85,10 +85,10 @@ class ASTRIDE_transf:
             [np.digitize(mean, quantiles) for mean in segments] 
             for segments in symbolic_dataset
         ]
-
-        # Étape 4 : Conversion des indices en symboles alphabétiques
+        
+        # Conversion des indices en symboles alphabétiques
         symbolic_dataset_str = [
-            [chr(64 + num) for num in symbolic_series] 
+            "".join([chr(65 + num) for num in symbolic_series]) 
             for symbolic_series in symbolic_dataset
         ]
 
@@ -96,5 +96,88 @@ class ASTRIDE_transf:
 
         return self.symbolic_data
 
-    def reconstruction_from_ASTRIDE(self, ASTRIDE_symbols): 
+    def reconstruction_from_ASTRIDE(self, ASTRIDE_symbols):
+        reconstructed_dataset = []
 
+        # Calcul des moyennes associées aux quantiles
+        quantiles = np.quantile(
+            [np.mean(series[self.mts_bkps_[i]:self.mts_bkps_[i+1]]) 
+            for series in self.dataset 
+            for i in range(len(self.mts_bkps_) - 1)],
+            np.linspace(0, 1, self.alphabet_size)
+        )
+        print(f'Voici les quantiles {quantiles}')
+
+        # Reconstruire chaque série
+        for series_idx, symbolic_series in enumerate(ASTRIDE_symbols):
+            reconstructed_series = np.zeros(self.sample_size)
+            for i, symbol in enumerate(symbolic_series):
+                # Trouver la valeur moyenne associée au symbole
+                segment_mean = quantiles[ord(symbol) - 65]  
+
+                # Vérification des limites de segment
+                if i >= len(self.mts_bkps_) - 1:
+                    break
+
+                start = self.mts_bkps_[i]
+                end = self.mts_bkps_[i + 1]
+                segment_length = end - start
+
+                # Remplir le segment reconstruit avec la valeur moyenne
+                reconstructed_series[start:end] = segment_mean
+
+            reconstructed_dataset.append(reconstructed_series)
+
+        return np.array(reconstructed_dataset)
+
+    def calculate_dged(self, ASTRIDE_symbols_1, ASTRIDE_symbols_2):
+        
+        # Calcul des quantiles
+        quantiles_1 = np.quantile(
+            [np.mean(series[self.mts_bkps_[i]:self.mts_bkps_[i+1]]) 
+            for series in self.dataset 
+            for i in range(len(self.mts_bkps_) - 1)],
+            np.linspace(0, 1, self.alphabet_size)
+        )
+        print(f'voici les quantiles 1 {quantiles_1}')
+        
+        # Représentation symbolique sur la base des quantiles
+        #symbolic_series_1 = [
+        #    [np.digitize(mean, quantiles_1) for mean in series] 
+        #    for series in ASTRIDE_symbols_1
+        #]
+        
+        #symbolic_series_2 = [
+        #    [np.digitize(mean, quantiles_1) for mean in series] 
+        #    for series in ASTRIDE_symbols_2
+        #]
+        
+        # Normalisation des segments selon les longueurs
+        #lengths_1 = [len(series) for series in symbolic_series_1]
+        #lengths_2 = [len(series) for series in symbolic_series_2]
+        
+        #min_len = min(min(lengths_1), min(lengths_2))
+        #symbolic_series_1 = [series[:min_len] for series in symbolic_series_1]
+        #symbolic_series_2 = [series[:min_len] for series in symbolic_series_2]
+
+        #print(symbolic_series_1, symbolic_series_2)
+        
+        # Calcul de la distance D-GED
+        dged = 0
+        #for s1, s2 in zip(ASTRIDE_symbols_1, ASTRIDE_symbols_2):
+        #    for i, (a, b) in enumerate(zip(s1, s2)):
+        #        sub_cost = np.sqrt((quantiles_1[a] - quantiles_1[b])**2)
+        #        submax = max(quantiles_1[a], quantiles_1[b])
+        #        dged += sub_cost
+
+        for i in range(len(ASTRIDE_symbols_1)):
+            symbol_1 = ASTRIDE_symbols_1[i]
+            symbol_2 = ASTRIDE_symbols_2[i]
+
+            segment_mean_1 = quantiles_1[ord(symbol_1) - 65] 
+            segment_mean_2 = quantiles_1[ord(symbol_2) - 65]
+            sub_cost = np.sqrt((segment_mean_1 - segment_mean_2)**2)
+            dged += sub_cost
+
+
+        return dged

@@ -26,7 +26,7 @@ class SYMBOLS():
         self.num_test_samples, self.test_ts_length = X_test.shape
         self.alphabet_size = alphabet_size
         self.num_segments = num_segments
-        if self.method == "oneD_sax":
+        if self.method == "oneD_SAX":
             self.Na = Na
             self.Ns = Ns
         
