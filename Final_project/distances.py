@@ -156,16 +156,12 @@ class TRENDIST(MINDIST):
         mindist = MINDIST(self.alphabet_size, self.ts_length)
 
         mindist_lookup_table = mindist.compute_lookup_table()
-
-        for i in range(w):
-            mean_distance += mindist_lookup_table.loc[tsx1[i][0], tsx2[i][0]] ** 2
-
         angle_lookup_table = self.compute_angle_lookup_table()
 
-        for i in range(w):
+        for i in range(w // 4):
+            mean_distance += mindist_lookup_table.loc[tsx1[4*i], tsx2[i][4*i]] ** 2
             for j in range(1, 4):  # Compute trend distances for each component of the trend
-
-                trend_distance += angle_lookup_table.loc[tsx1[i][j], tsx2[i][j]] ** 2
+                trend_distance += angle_lookup_table.loc[tsx1[4*i + j], tsx2[4*i + j]] ** 2
 
         tsx_dist = np.sqrt(compression_ratio * mean_distance + ((compression_ratio / w) ** 2) * trend_distance)
         
