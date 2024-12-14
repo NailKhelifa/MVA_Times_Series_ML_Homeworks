@@ -17,7 +17,7 @@ from sklearn.metrics import roc_curve, auc
 
 class SYMBOLS():
 
-    def __init__(self, X_train, X_test, method='SAX', k=1, num_segments=20, alphabet_size=16):
+    def __init__(self, X_train, X_test, method='SAX', k=1, num_segments=20, alphabet_size=16, Na = 4, Ns = 4):
         self.k = k # number of neighbors for the prediction 
         self.method = method
         self.X_train = X_train
@@ -26,6 +26,8 @@ class SYMBOLS():
         self.num_test_samples, self.test_ts_length = X_test.shape
         self.alphabet_size = alphabet_size
         self.num_segments = num_segments
+        self.Na = Na
+        self.Ns = Ns
         # extract train labels (y_train) and train features (x_train) from X_train
         self.X_train.columns = list(self.X_train.columns[:-1]) + ['label']
         x_train, y_train = self.X_train.iloc[:, :-1], self.X_train["label"]
@@ -56,6 +58,8 @@ class SYMBOLS():
                                     f"ne correspond pas à num_segments ({self.num_segments})")
             elif self.method == "ESAX":
                 symbolic_seq = sax_trans.calculate_esax()
+            elif self.method == "oneD_SAX":
+                symbolic_seq = sax_trans.transf_1d_sax(self.Na, self.Ns)
 
 
             
@@ -76,6 +80,8 @@ class SYMBOLS():
                                     f"ne correspond pas à num_segments ({self.num_segments})")
             elif self.method == "ESAX":
                 symbolic_seq = sax_trans.calculate_esax()
+            elif self.method == "oneD_SAX":
+                symbolic_seq = sax_trans.transf_1d_sax(self.Na, self.Ns)
             
             
 
@@ -126,5 +132,45 @@ class SYMBOLS():
         self.accuracy = np.mean(predictions == self.y_test)
         
         print(f"Accuracy:{self.accuracy}")
+
+    def predict_oneD(self): 
+        
+        ## Pour le 1d-SAX, on ne peut pas utiliser la fonction mindist, donc on fait la distance Euclidienne
+        ## Entre 2 reconstructions des séries temporelles
+
+        ## Reconstruction des séries temporelles à partir des symboles
+        reconstructed_train = []
+
+        for i in range(self.num_train_samples):
+            symbol = self.symbolized_x_train.iloc[i][0]
+            reconstructed_series = SAX_transform.reconstruct_from_1d_sax(self, [symbol], self.Na, self.Ns)
+            reconstructed_train.append(reconstructed_series)
+        
+        reconstructed_test = []
+
+        for i in range(self.num_test_samples):
+            symbol = self.symbolized_x_test.iloc[i][0]
+            reconstructed_series = SAX_transform.reconstruct_from_1d_sax(self, [symbol], self.Na, self.Ns)
+            reconstructed_test.append(reconstructed_series)
+
+        ## Calcul de la distance Euclidienne entre les séries temporelles reconstruites
+
+        predictions = []
+        
+        for j in range(self.num_test_samples):
+            
+            distances = [np.linalg.norm(np.array(reconstructed_test[j]) - np.array(reconstructed_train[i])) for i in range(self.num_train_samples)]
+            k_indices = np.argsort(distances)[:self.k]
+            k_nearest_labels = [self.y_train[i] for i in k_indices]
+            most_common = Counter(k_nearest_labels).most_common(1)
+            predictions.append(most_common[0][0])
+
+        self.predictions = predictions
+        self.accuracy = np.mean(predictions == self.y_test)
+
+        print(f"Accuracy:{self.accuracy}")
+
+
+
 
 

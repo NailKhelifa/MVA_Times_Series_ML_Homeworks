@@ -225,11 +225,20 @@ class SAX_transform:
             avg_symbol = symbol >> int(np.log2(Ns))
             slope_symbol = symbol & (Ns - 1)
 
-            # On retrouve les valeurs approximatives de la moyenne et de la pente
-            approx_avg = (avg_breakpoints[avg_symbol - 1] + avg_breakpoints[avg_symbol]) / 2 if avg_symbol > 0 else avg_breakpoints[0]
-            approx_slope = (slope_breakpoints[slope_symbol - 1] + slope_breakpoints[slope_symbol]) / 2 if slope_symbol > 0 else slope_breakpoints[0]
+            if avg_symbol == 0: 
+                approx_avg = avg_breakpoints[0]
+            elif avg_symbol == Na - 1:
+                approx_avg = avg_breakpoints[-1]
+            else:
+                approx_avg = (avg_breakpoints[avg_symbol - 1] + avg_breakpoints[avg_symbol]) / 2 
 
-            
+            if slope_symbol == 0:
+                approx_slope = slope_breakpoints[0]
+            elif slope_symbol == Ns - 1:
+                approx_slope = slope_breakpoints[-1]
+            else:
+                approx_slope = (slope_breakpoints[slope_symbol - 1] + slope_breakpoints[slope_symbol]) / 2 
+
             segment = [approx_avg + approx_slope * (t - 1) for t in range(1, segment_size + 1)]
             reconstructed_series.extend(segment)
 
