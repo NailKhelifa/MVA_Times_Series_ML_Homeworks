@@ -50,13 +50,14 @@ class SYMBOLS():
             sax_trans = SAX_transform(ts, self.num_segments, self.alphabet_size)
             if self.method == "SAX":
                 symbolic_seq = sax_trans.calculate_sax()
+                # Vérifier que la longueur de symbolic_seq correspond à num_segments
+                if len(symbolic_seq) != self.num_segments:
+                    raise ValueError(f"La longueur de symbolic_seq ({len(symbolic_seq)}) "
+                                    f"ne correspond pas à num_segments ({self.num_segments})")
             elif self.method == "ESAX":
                 symbolic_seq = sax_trans.calculate_esax()
 
-            # Vérifier que la longueur de symbolic_seq correspond à num_segments
-            if len(symbolic_seq) != self.num_segments:
-                raise ValueError(f"La longueur de symbolic_seq ({len(symbolic_seq)}) "
-                                f"ne correspond pas à num_segments ({self.num_segments})")
+
             
 
             train_symbolic_data.iloc[i, :] = symbolic_seq
@@ -69,13 +70,13 @@ class SYMBOLS():
             sax_trans = SAX_transform(ts, self.num_segments, self.alphabet_size)
             if self.method == "SAX":
                 symbolic_seq = sax_trans.calculate_sax()
+                # Vérifier que la longueur de symbolic_seq correspond à num_segments
+                if len(symbolic_seq) != self.num_segments:
+                    raise ValueError(f"La longueur de symbolic_seq ({len(symbolic_seq)}) "
+                                    f"ne correspond pas à num_segments ({self.num_segments})")
             elif self.method == "ESAX":
                 symbolic_seq = sax_trans.calculate_esax()
             
-            # Vérifier que la longueur de symbolic_seq correspond à num_segments
-            if len(symbolic_seq) != self.num_segments:
-                raise ValueError(f"La longueur de symbolic_seq ({len(symbolic_seq)}) "
-                                f"ne correspond pas à num_segments ({self.num_segments})")
             
 
             test_symbolic_data.iloc[i, :] = symbolic_seq
