@@ -174,15 +174,15 @@ class SAX_transform:
             - A list of symbols representing the 1d-SAX representation
         """
         n = len(self.series)
-        segment_size = n // self.segments
-        segments = [self.series[i * self.segments:(i + 1) * self.segments] for i in range(segment_size)]
+        segment_size = n // self.num_segments
+        segments = self.segment_time_series(self.series)
         
         # Compute breakpoints for average and slope values
         avg_breakpoints = norm.ppf(np.linspace(0, 1, Na + 1)[1:-1], loc=0, scale=1)
-        slope_variance = 0.03 / self.segments
+        slope_variance = 0.03 / self.num_segments
         slope_breakpoints = norm.ppf(np.linspace(0, 1, Ns + 1)[1:-1], loc=0, scale=np.sqrt(slope_variance))
 
-        symbols = []
+        OneD_SAX = []
 
         for _, segment in enumerate(segments):
             t = np.arange(len(segment))
@@ -196,9 +196,44 @@ class SAX_transform:
 
             # Combine the quantized symbols into a single symbol
             combined_symbol = (avg_symbol << int(np.log2(Ns))) | slope_symbol
-            symbols.append(combined_symbol)
+            OneD_SAX.append(combined_symbol)
 
-        return symbols
+        return OneD_SAX
+
+    def reconstruct_from_1d_sax(self, OneD_SAX, Na, Ns):
+        """
+        Reconstructs an approximation of the time series from its 1d-SAX representation.
+        
+        OneD_SAX: List of symbols representing the 1d-SAX representation.
+        Na: Number of quantization levels for average values.
+        Ns: Number of quantization levels for slope values.
+        
+        Returns:
+            - A list representing the reconstructed time series.
+        """
+        # On recalcule les breakpoints
+        avg_breakpoints = norm.ppf(np.linspace(0, 1, Na + 1)[1:-1], loc=0, scale=1)
+        slope_variance = 0.03 / self.num_segments
+        slope_breakpoints = norm.ppf(np.linspace(0, 1, Ns + 1)[1:-1], loc=0, scale=np.sqrt(slope_variance))
+
+        reconstructed_series = []
+        segment_size = len(self.series) // self.num_segments
+
+        for symbol in OneD_SAX:
+
+            # Par construction de 1d-SAX, on peut retrouver les symboles de la moyenne et de la pente
+            avg_symbol = symbol >> int(np.log2(Ns))
+            slope_symbol = symbol & (Ns - 1)
+
+            # On retrouve les valeurs approximatives de la moyenne et de la pente
+            approx_avg = (avg_breakpoints[avg_symbol - 1] + avg_breakpoints[avg_symbol]) / 2 if avg_symbol > 0 else avg_breakpoints[0]
+            approx_slope = (slope_breakpoints[slope_symbol - 1] + slope_breakpoints[slope_symbol]) / 2 if slope_symbol > 0 else slope_breakpoints[0]
+
+            
+            segment = [approx_avg + approx_slope * (t - 1) for t in range(1, segment_size + 1)]
+            reconstructed_series.extend(segment)
+
+        return reconstructed_series
 
     ###################################### TVA ######################################
 
