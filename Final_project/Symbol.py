@@ -17,7 +17,7 @@ from sklearn.metrics import roc_curve, auc
 
 class SYMBOLS():
 
-    def __init__(self, X_train, X_test, method='SAX', k=1, num_segments=20, alphabet_size=16, Na = 4, Ns = 4):
+    def __init__(self, X_train, X_test, method='SAX', k=1, num_segments=20, alphabet_size=16, angle_breakpoint_alphabet_size=5, Na = 4, Ns = 4):
         self.k = k # number of neighbors for the prediction 
         self.method = method
         self.X_train = X_train
@@ -26,8 +26,13 @@ class SYMBOLS():
         self.num_test_samples, self.test_ts_length = X_test.shape
         self.alphabet_size = alphabet_size
         self.num_segments = num_segments
-        self.Na = Na
-        self.Ns = Ns
+        if self.method == "oneD_sax":
+            self.Na = Na
+            self.Ns = Ns
+        
+        if self.method ==  "TSAX":
+            self.angle_breakpoint_alphabet_size = angle_breakpoint_alphabet_size
+
         # extract train labels (y_train) and train features (x_train) from X_train
         self.X_train.columns = list(self.X_train.columns[:-1]) + ['label']
         x_train, y_train = self.X_train.iloc[:, :-1], self.X_train["label"]
@@ -61,8 +66,10 @@ class SYMBOLS():
                 if len(symbolic_seq) != self.num_segments:
                     raise ValueError(f"La longueur de symbolic_seq ({len(symbolic_seq)}) "
                                     f"ne correspond pas à num_segments ({self.num_segments})")
+                
             elif self.method == "ESAX":
                 symbolic_seq = sax_trans.calculate_esax()
+
             elif self.method == "oneD_SAX":
                 symbolic_seq = sax_trans.transf_1d_sax(self.Na, self.Ns)
                 
@@ -70,10 +77,13 @@ class SYMBOLS():
                     raise ValueError(f"La taille de symbolic_seq ({len(symbolic_seq)}) "
                                 f"ne correspond pas à num_segments ({self.Na + self.Ns})")
 
+            elif self.method == "TSAX":
+                symbolic_seq = sax_trans.calculate_tsax(self.angle_breakpoint_alphabet_size)
 
             
             if self.method == "oneD_SAX":
                 train_symbolic_data[i] = symbolic_seq
+                
             else:
                 train_symbolic_data.iloc[i, :] = symbolic_seq
 
