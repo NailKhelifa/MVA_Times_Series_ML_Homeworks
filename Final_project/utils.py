@@ -2,6 +2,8 @@ import numpy as np
 import scipy.stats as stats # for the breakpoints in SAX
 import pandas as pd
 from scipy.stats import norm
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 ##########################################################################################################################
 ###################################################### DATA LOADING ######################################################
