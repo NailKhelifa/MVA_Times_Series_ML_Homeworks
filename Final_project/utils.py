@@ -141,6 +141,20 @@ def plot_classes(df0, df1, num_seg):
     plt.show()
 
 
+##########################################################################################################################
+################################ BEFORE SYMOBLIZATION:  PRE-PROCESSING SERIES ############################################
+##########################################################################################################################
 
+def std_scaler(df):
+    """
+    Standardise les séries temporelles dans un DataFrame.
+    
+    Args:
+        df (pd.DataFrame): DataFrame contenant les séries temporelles.
+        
+    Returns:
+        pd.DataFrame: DataFrame avec les séries temporelles standardisées.
+    """
+    return (df - df.mean(axis=1).values[:, np.newaxis]) / df.std(axis=1).values[:, np.newaxis]
 
 
