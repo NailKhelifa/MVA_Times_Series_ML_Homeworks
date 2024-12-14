@@ -21,15 +21,16 @@ class ASTRIDE_transf:
         self.alphabet_size = alphabet_size
         self.num_samples = dataset.shape[0]
         self.sample_size = dataset.shape[1]
-        self.symbolic_data = np.zeros((self.num_samples, self.num_segments))
         self.pen_factor = pen_factor
         self.mean_or_slope = mean_or_slope
         self.mts_bkps_ = None
 
+        ## On initialise les données symboliques à None
+        self.symbolic_data = None
     def segmentation_adaptive(self, *args, **kwargs):
         """In case of multivariate adaptive segmentation, get the list of
         multivariate breakpoints."""
-        
+
         list_of_signals = self.dataset
         # `list_of_signals` must of shape (n_signals, n_samples)
         if len(np.shape(list_of_signals)) == 3:
@@ -62,4 +63,38 @@ class ASTRIDE_transf:
         """Return penalty value for a single signal."""
         n_samples = signal.shape[0]
         return self.pen_factor * np.log(n_samples)
+    
+    def _ASTRIDE_symbolize(self):
+        
+        #Calcul des moyennes pour tous les segments de toutes les séries
+        all_segments_means = []
+        symbolic_dataset = []
+
+        for series in self.dataset:  
+            
+            segments_means = [np.mean(series[self.mts_bkps_[i]:self.mts_bkps_[i+1]]) 
+                            for i in range(len(self.mts_bkps_) - 1)]
+            all_segments_means.extend(segments_means)  
+            symbolic_dataset.append(segments_means)  
+
+        #Calcul des quantiles empiriques sur toutes les moyennes
+        quantiles = np.quantile(all_segments_means, np.linspace(0, 1, self.alphabet_size + 1)[1:-1])
+
+        #Binning des segments selon les quantiles
+        symbolic_dataset = [
+            [np.digitize(mean, quantiles) for mean in segments] 
+            for segments in symbolic_dataset
+        ]
+
+        # Étape 4 : Conversion des indices en symboles alphabétiques
+        symbolic_dataset_str = [
+            [chr(64 + num) for num in symbolic_series] 
+            for symbolic_series in symbolic_dataset
+        ]
+
+        self.symbolic_data = symbolic_dataset_str
+
+        return self.symbolic_data
+
+    def reconstruction_from_ASTRIDE(self, ASTRIDE_symbols): 
 
