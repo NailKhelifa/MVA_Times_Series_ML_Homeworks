@@ -1,5 +1,5 @@
 from SAX_transf import SAX_transform
-from distances import MINDIST
+from distances import MINDIST, TRENDIST
 import numpy as np
 import pandas as pd
 from collections import Counter
@@ -121,7 +121,7 @@ class SYMBOLS():
         self.symbolized_x_train = train_symbolic_data
         self.symbolized_x_test = test_symbolic_data
 
-    def mindist(self, sax1, sax2, ts_length):
+    def dist(self, sax1, sax2, ts_length):
         """
         Computes the MINDIST (minimum distance) between two SAX representations.
 
@@ -134,9 +134,13 @@ class SYMBOLS():
             float: The MINDIST between the two SAX representations.
         """
   
-        mindist = MINDIST(self.alphabet_size, ts_length)
-
-        return mindist.mindist(sax1, sax2)
+        if self.method == "TSAX":
+            dist = TRENDIST(self.alphabet_size, ts_length, self.angle_breakpoint_alphabet_size)
+            return dist.tsax_mindist(sax1, sax2)
+        
+        else:
+            dist = MINDIST(self.alphabet_size, ts_length)
+            return dist.mindist(sax1, sax2)
     
     # Prédiction pour un seul point de test
     def _predict(self):
@@ -145,7 +149,7 @@ class SYMBOLS():
         # make a prediction based on k-nn for each symbolized series in the test dataset
         for j in range(self.num_test_samples):
             # Calcul des distances entre x_test et tous les points d'entraînement
-            distances = [self.mindist(self.symbolized_x_test.iloc[j][0], self.symbolized_x_train.iloc[i][0], self.train_ts_length) for i in range(self.num_train_samples)]
+            distances = [self.dist(self.symbolized_x_test.iloc[j][0], self.symbolized_x_train.iloc[i][0], self.train_ts_length) for i in range(self.num_train_samples)]
             
             # Trier les distances et obtenir les indices des k plus proches voisins
             k_indices = np.argsort(distances)[:self.k]

@@ -53,7 +53,6 @@ class MINDIST():
         # Convert to DataFrame with alphabet as row and column labels
         return pd.DataFrame(lookup_table, index=alphabet, columns=alphabet)
 
-
     def mindist(self, sequence1, sequence2):
         """
         Compute the MINDIST distance between two sequences based on the lookup table.
@@ -159,7 +158,7 @@ class TRENDIST(MINDIST):
         mindist_lookup_table = mindist.compute_lookup_table()
 
         for i in range(w):
-            mean_distance += mindist_lookup_table.loc[tsx1[i], tsx2[i]] ** 2
+            mean_distance += mindist_lookup_table.loc[tsx1[i][0], tsx2[i][0]] ** 2
 
         angle_lookup_table = self.compute_angle_lookup_table()
 
