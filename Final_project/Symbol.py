@@ -37,12 +37,17 @@ class SYMBOLS():
         self.X_test.columns = list(self.X_test.columns[:-1]) + ['label']
         x_test, y_test = self.X_test.iloc[:, :-1], self.X_test["label"]
         self.x_test = x_test
-        self.y_test = y_test.replace(-1, 0)     
+        self.y_test = y_test.replace(-1, 0)  
+        self.symbolize()   
 
     def symbolize(self):   
         # Initialiser le DataFrame pour les symboles
-        train_symbolic_data = pd.DataFrame(np.zeros((self.num_train_samples, 1)))
-        test_symbolic_data = pd.DataFrame(np.zeros((self.num_test_samples, 1)))
+        if self.method == "oneD_SAX":
+            train_symbolic_data = np.zeros((self.num_train_samples, self.num_segments))
+            test_symbolic_data = np.zeros((self.num_test_samples, self.num_segments))
+        else: 
+            train_symbolic_data = pd.DataFrame(np.zeros((self.num_train_samples, 1)))
+            test_symbolic_data = pd.DataFrame(np.zeros((self.num_test_samples, 1)))
 
         ## symbolize the train time series 
         for i in range(self.num_train_samples):
@@ -60,11 +65,17 @@ class SYMBOLS():
                 symbolic_seq = sax_trans.calculate_esax()
             elif self.method == "oneD_SAX":
                 symbolic_seq = sax_trans.transf_1d_sax(self.Na, self.Ns)
+                
+                if len(symbolic_seq) != self.num_segments:
+                    raise ValueError(f"La taille de symbolic_seq ({len(symbolic_seq)}) "
+                                f"ne correspond pas à num_segments ({self.Na + self.Ns})")
 
 
             
-
-            train_symbolic_data.iloc[i, :] = symbolic_seq
+            if self.method == "oneD_SAX":
+                train_symbolic_data[i] = symbolic_seq
+            else:
+                train_symbolic_data.iloc[i, :] = symbolic_seq
 
         ## symbolize the test time series 
         for i in range(self.num_test_samples):
@@ -81,11 +92,18 @@ class SYMBOLS():
             elif self.method == "ESAX":
                 symbolic_seq = sax_trans.calculate_esax()
             elif self.method == "oneD_SAX":
+                test_symbolic_data = np.zeros((self.num_train_samples, self.num_segments))
                 symbolic_seq = sax_trans.transf_1d_sax(self.Na, self.Ns)
-            
+
+                if len(symbolic_seq) != self.num_segments:
+                    raise ValueError(f"La taille de symbolic_seq ({len(symbolic_seq)}) "
+                                f"ne correspond pas à num_segments ({self.Na + self.Ns})")
             
 
-            test_symbolic_data.iloc[i, :] = symbolic_seq
+            if self.method == "oneD_SAX":
+                test_symbolic_data[i] = symbolic_seq
+            else:
+                test_symbolic_data.iloc[i, :] = symbolic_seq
 
         ## save the symbolized time series as attributes
         self.symbolized_x_train = train_symbolic_data
@@ -142,15 +160,17 @@ class SYMBOLS():
         reconstructed_train = []
 
         for i in range(self.num_train_samples):
-            symbol = self.symbolized_x_train.iloc[i][0]
-            reconstructed_series = SAX_transform.reconstruct_from_1d_sax(self, [symbol], self.Na, self.Ns)
+            symbol = self.symbolized_x_train[i]
+            sax_trans = SAX_transform(self.x_train.iloc[i, :], self.num_segments, self.alphabet_size)
+            reconstructed_series = sax_trans.reconstruct_from_1d_sax(list(map(int, symbol)), self.Na, self.Ns)
             reconstructed_train.append(reconstructed_series)
         
         reconstructed_test = []
 
         for i in range(self.num_test_samples):
-            symbol = self.symbolized_x_test.iloc[i][0]
-            reconstructed_series = SAX_transform.reconstruct_from_1d_sax(self, [symbol], self.Na, self.Ns)
+            symbol = self.symbolized_x_test[i]
+            sax_trans = SAX_transform(self.x_test.iloc[i, :], self.num_segments, self.alphabet_size)
+            reconstructed_series = sax_trans.reconstruct_from_1d_sax(list(map(int, symbol)), self.Na, self.Ns)
             reconstructed_test.append(reconstructed_series)
 
         ## Calcul de la distance Euclidienne entre les séries temporelles reconstruites

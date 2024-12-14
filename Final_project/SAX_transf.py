@@ -173,6 +173,7 @@ class SAX_transform:
         Returns:
             - A list of symbols representing the 1d-SAX representation
         """
+       
         n = len(self.series)
         segment_size = n // self.num_segments
         segments = self.segment_time_series(self.series)
