@@ -161,6 +161,40 @@ class SAX_transform:
 
         return esax_representation
 
+    def reconstruction_from_sax(self, sax_representation, option = None):
+        """
+        Reconstructs an approximation of the time series from its SAX representation.
+        Args:
+            sax_representation : SAX representation as a string of symbols.
+            num_segments : Number of segments.
+        Returns:
+            array-like: Reconstructed time series.
+        """
+        # On détermine les breakpoints
+        breakpoints = norm.ppf(np.linspace(0, 1, self.alphabet_size + 1)[1:-1])
+
+        # On reconstruit la série temporelle -> on prend la moyenne des breakpoints correspondant à chaque symbole
+        paa_values = []
+        if option == "esax":
+            sax_representation = sax_representation[1::3]
+            print(f'Voici la nouvelle représentation ESAX: {sax_representation} et sa taille{len(sax_representation)}')
+
+        for symbol in sax_representation:
+            if ord(symbol) == 97 + self.alphabet_size - 1:
+                paa_values.append(breakpoints[-1])
+            elif ord(symbol) == 97:
+                paa_values.append(breakpoints[0])
+            else:
+                paa_values.append(np.mean([breakpoints[ord(symbol) - 97], breakpoints[ord(symbol) - 98]]))
+
+        # On reconstruit la série temporelle
+        segment_size = len(self.series) // self.num_segments
+        reconstructed_series = np.repeat(paa_values[:-1], len(self.series) // self.num_segments)
+        last_segment_size = len(self.series) - segment_size * (self.num_segments - 1)
+        reconstructed_series = np.append(reconstructed_series, paa_values[-1] * np.ones(last_segment_size))
+
+        return reconstructed_series
+
     ###################################### 1d-SAX ######################################
 
     def transf_1d_sax(self, Na, Ns):
