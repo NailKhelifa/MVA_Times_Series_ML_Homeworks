@@ -109,6 +109,8 @@ class SYMBOLS():
                     raise ValueError(f"La taille de symbolic_seq ({len(symbolic_seq)}) "
                                 f"ne correspond pas à num_segments ({self.Na + self.Ns})")
             
+            elif self.method == "TSAX":
+                symbolic_seq = sax_trans.calculate_tsax(self.angle_breakpoint_alphabet_size)
 
             if self.method == "oneD_SAX":
                 test_symbolic_data[i] = symbolic_seq
