@@ -159,7 +159,7 @@ class TRENDIST(MINDIST):
         angle_lookup_table = self.compute_angle_lookup_table()
 
         for i in range(w // 4):
-            mean_distance += mindist_lookup_table.loc[tsx1[4*i], tsx2[i][4*i]] ** 2
+            mean_distance += mindist_lookup_table.loc[tsx1[4*i], tsx2[4*i]] ** 2
             for j in range(1, 4):  # Compute trend distances for each component of the trend
                 trend_distance += angle_lookup_table.loc[tsx1[4*i + j], tsx2[4*i + j]] ** 2
 
