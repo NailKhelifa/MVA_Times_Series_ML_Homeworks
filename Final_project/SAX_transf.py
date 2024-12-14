@@ -129,7 +129,6 @@ class SAX_transform:
         return tsax_paa
 
     ###################################### SAX ######################################
-
     def calculate_sax(self):
         """
         Compute the ESAX representation of a time series.
@@ -235,7 +234,6 @@ class SAX_transform:
 
         # Step 3: Determine breakpoints based on Gaussian distribution
         breakpoints = norm.ppf(np.linspace(0, 1, self.alphabet_size + 1)[1:-1])
-        angles_breakpoints = generate_angle_breakpoints(angle_breakpoint_alphabet_size)
 
         # Step 4: Map PAA coefficients to symbols
         tsax_representation = ''
@@ -408,10 +406,10 @@ def find_key_points(time_series):
 
     # Étape 6 : Retourner les quatre points clés
     return [start, MP, MD, end]
-
 def calculate_trend_angles(points):
     """
-    Calcule les trois angles de tendance entre les quatre points [start, MP, MD, end].
+    Calcule les trois angles de tendance entre les quatre points [start, MP, MD, end],
+    en s'assurant que les angles sont compris entre -90° et 90°.
 
     Arguments :
         points : list of tuples [(x1, y1), (x2, y2), (x3, y3), (x4, y4)] - Les quatre points clés.
@@ -420,6 +418,7 @@ def calculate_trend_angles(points):
     Retourne :
         tuple : Les trois angles de tendance (en degrés) définis par les trois segments reliant les quatre points.
     """
+    
     def angle_between_points(p1, p2):
         """
         Calcule l'angle (en radians) entre deux points p1 et p2 par rapport à l'axe horizontal.
@@ -428,6 +427,16 @@ def calculate_trend_angles(points):
         x2, y2 = p2
         return math.atan2(y2 - y1, x2 - x1)  # Angle par rapport à l'horizontale
 
+    def normalize_angle(angle):
+        """
+        Normalise l'angle entre -90° et 90°.
+        """
+        if angle > 90:
+            angle -= 180
+        elif angle < -90:
+            angle += 180
+        return angle
+    
     # Extraire les quatre points clés
     start, MP, MD, end = points
     
@@ -435,17 +444,18 @@ def calculate_trend_angles(points):
     angle1 = angle_between_points(start, MP)  # Angle du segment start -> MP
     angle2 = angle_between_points(MP, MD)    # Angle du segment MP -> MD
     angle3 = angle_between_points(MD, end)   # Angle du segment MD -> end
-
+    
     # Calcul des différences d'angles entre les segments consécutifs
     trend_angle1 = math.degrees(angle2 - angle1)  # Angle entre le premier et le deuxième segment
     trend_angle2 = math.degrees(angle3 - angle2)  # Angle entre le deuxième et le troisième segment
 
-    # Normaliser les angles pour qu'ils soient compris entre -180° et 180°
-    trend_angle1 = (trend_angle1 + 180) % 360 - 180
-    trend_angle2 = (trend_angle2 + 180) % 360 - 180
+    # Normaliser les angles pour qu'ils soient compris entre -90° et 90°
+    trend_angle1 = normalize_angle(trend_angle1)
+    trend_angle2 = normalize_angle(trend_angle2)
 
-    # Ajouter les deux angles de tendance et l'angle absolu final
-    trend_angle3 = math.degrees(angle3)  # L'angle final absolu (MD -> end par rapport à l'horizontale)
+    # Normaliser l'angle final entre -90° et 90°
+    trend_angle3 = math.degrees(angle3)
+    trend_angle3 = normalize_angle(trend_angle3)
 
     return (trend_angle1, trend_angle2, trend_angle3)
 
