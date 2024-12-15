@@ -12,6 +12,7 @@ from tslearn.utils import to_time_series_dataset
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import precision_recall_curve, average_precision_score
 from sklearn.metrics import roc_curve, auc
+from ASTRIDE import ASTRIDE_transf
 
 
 
@@ -33,6 +34,9 @@ class SYMBOLS():
         if self.method ==  "TSAX":
             self.angle_breakpoint_alphabet_size = angle_breakpoint_alphabet_size
 
+        if self.method == "ASTRIDE":
+            self.astride_ = ASTRIDE_transf(np.array(self.X_train), self.num_segments, self.alphabet_size, X_test=np.array(self.X_test))
+
         # extract train labels (y_train) and train features (x_train) from X_train
         self.X_train.columns = list(self.X_train.columns[:-1]) + ['label']
         x_train, y_train = self.X_train.iloc[:, :-1], self.X_train["label"]
@@ -50,6 +54,16 @@ class SYMBOLS():
         if self.method == "oneD_SAX":
             train_symbolic_data = np.zeros((self.num_train_samples, self.num_segments))
             test_symbolic_data = np.zeros((self.num_test_samples, self.num_segments))
+        elif self.method == "ASTRIDE":
+                
+            self.astride_.segmentation_adaptive()
+            self.astride_._ASTRIDE_symbolize()
+
+            self.symbolized_x_train = self.astride_.symbolic_data
+            self.symbolized_x_test = self.astride_.symbolic_data_test
+
+            return
+
         else: 
             train_symbolic_data = pd.DataFrame(np.zeros((self.num_train_samples, 1)))
             test_symbolic_data = pd.DataFrame(np.zeros((self.num_test_samples, 1)))
@@ -111,6 +125,7 @@ class SYMBOLS():
             
             elif self.method == "TSAX":
                 symbolic_seq = sax_trans.calculate_tsax(self.angle_breakpoint_alphabet_size)
+                
 
             if self.method == "oneD_SAX":
                 test_symbolic_data[i] = symbolic_seq
@@ -206,7 +221,31 @@ class SYMBOLS():
 
         print(f"Accuracy:{self.accuracy}")
 
+        ###################################### ASTRIDE_KNN ######################################
 
+    def predict_ASTRIDE(self):
 
+        predictions = []
+        # make a prediction based on k-nn for each symbolized series in the test dataset
+        for j in range(self.num_test_samples):
+            print(j / self.num_test_samples)
+            # Calcul des distances entre x_test et tous les points d'entraînement
+            distances = [self.astride_.calculate_dged(self.symbolized_x_test[j], self.symbolized_x_train[i]) for i in range(self.num_train_samples)]
+            
+            # Trier les distances et obtenir les indices des k plus proches voisins
+            k_indices = np.argsort(distances)[:self.k]
+            
+            # Récupérer les classes des k plus proches voisins
+            k_nearest_labels = [self.y_train[i] for i in k_indices]
+            
+            # Classification : renvoyer la classe la plus fréquente
+            most_common = Counter(k_nearest_labels).most_common(1)
+            predictions.append(most_common[0][0])
+
+        self.predictions = predictions
+        # Calcul de l'exactitude : proportion de bonnes prédictions
+        self.accuracy = np.mean(predictions == self.y_test)
+        
+        print(f"Accuracy:{self.accuracy}")
 
 
