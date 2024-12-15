@@ -144,7 +144,7 @@ class ASTRIDE_transf:
 
         # Reconstruire chaque série
         for series_idx, symbolic_series in enumerate(ASTRIDE_symbols):
-            reconstructed_series = np.zeros(self.sample_size)
+            reconstructed_series = np.zeros(len(self.X_train[0]))
             for i, symbol in enumerate(symbolic_series):
                 # Trouver la valeur moyenne associée au symbole
                 segment_mean = quantiles[ord(symbol) - 65]  
