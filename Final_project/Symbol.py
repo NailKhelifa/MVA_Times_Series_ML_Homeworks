@@ -13,6 +13,7 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import precision_recall_curve, average_precision_score
 from sklearn.metrics import roc_curve, auc
 from ASTRIDE import ASTRIDE_transf
+from SFA import SFA
 
 
 
@@ -36,6 +37,9 @@ class SYMBOLS():
 
         if self.method == "ASTRIDE":
             self.astride_ = ASTRIDE_transf(np.array(self.X_train), self.num_segments, self.alphabet_size, X_test=np.array(self.X_test))
+
+        if self.method == "SFA":
+            self.sfa_ = SFA(self.X_train, num_coefs=self.num_segments, alphabet_size= self.alphabet_size, X_test=self.X_test)
 
         # extract train labels (y_train) and train features (x_train) from X_train
         self.X_train.columns = list(self.X_train.columns[:-1]) + ['label']
@@ -62,6 +66,12 @@ class SYMBOLS():
             self.symbolized_x_train = self.astride_.symbolic_data
             self.symbolized_x_test = self.astride_.symbolic_data_test
 
+            return
+        
+        elif self.method == "SFA":
+            self.sfa_.symbolize_SFA()
+            self.symbolized_x_train = self.sfa_.symbolic_data
+            self.symbolized_x_test = self.sfa_.symbolic_data_test
             return
 
         else: 
@@ -228,7 +238,7 @@ class SYMBOLS():
         predictions = []
         # make a prediction based on k-nn for each symbolized series in the test dataset
         for j in range(self.num_test_samples):
-            print(j / self.num_test_samples)
+            
             # Calcul des distances entre x_test et tous les points d'entraînement
             distances = [self.astride_.calculate_dged(self.symbolized_x_test[j], self.symbolized_x_train[i]) for i in range(self.num_train_samples)]
             
@@ -247,5 +257,35 @@ class SYMBOLS():
         self.accuracy = np.mean(predictions == self.y_test)
         
         print(f"Accuracy:{self.accuracy}")
+
+    ###################################### SFA_KNN ######################################
+
+    def predict_SFA(self):
+        
+        predictions = []
+        # make a prediction based on k-nn for each symbolized series in the test dataset
+        for j in range(self.num_test_samples):
+            print(j / self.num_test_samples)
+            # Calcul des distances entre x_test et tous les points d'entraînement
+            distances = [self.sfa_.SFA_distance(self.symbolized_x_test[j], self.symbolized_x_train[i]) for i in range(self.num_train_samples)]
+            
+            # Trier les distances et obtenir les indices des k plus proches voisins
+            k_indices = np.argsort(distances)[:self.k]
+            
+            # Récupérer les classes des k plus proches voisins
+            k_nearest_labels = [self.y_train[i] for i in k_indices]
+            
+            # Classification : renvoyer la classe la plus fréquente
+            most_common = Counter(k_nearest_labels).most_common(1)
+            predictions.append(most_common[0][0])
+
+        self.predictions = predictions
+        # Calcul de l'exactitude : proportion de bonnes prédictions
+        self.accuracy = np.mean(predictions == self.y_test)
+        
+        print(f"Accuracy:{self.accuracy}")
+
+
+
 
 

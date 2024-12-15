@@ -16,12 +16,12 @@ class SFA:
         self.num_coefs = num_coefs
         self.X_train = X_train
         self.X_test = X_test
-        self.breakpoints = self.compute_breakpoints()
+        self.strategy = strategy
 
         self.symbolic_data = None
         self.symbolic_data_test = None
         self.sfa = SymbolicFourierApproximation(n_coefs=self.num_coefs,  n_bins=self.alphabet_size, strategy=self.strategy)
-        self.bin_edges = self.sfa.bin_edges_
+        
 
     def symbolize_SFA(self):
         """
@@ -37,6 +37,7 @@ class SFA:
         # Transformer les séries temporelles en représentations symboliques
         X_train_sfa = self.sfa.fit_transform(self.X_train)
         self.symbolic_data = X_train_sfa
+        self.bin_edges = self.sfa.bin_edges_
         
         if self.X_test is not None:
             X_test_sfa = self.sfa.transform(self.X_test)
@@ -67,16 +68,16 @@ class SFA:
             num2 = ord(sequence2[i]) - ord('a')
 
             if num1 == 0: 
-                edge1 = self.bin_edges[i][0]
+                edge1 = [self.bin_edges[i][0]]*2
             elif num1 == self.alphabet_size - 1:
-                edge1 = self.bin_edges[i][-1]
+                edge1 = [self.bin_edges[i][-1]]*2
             else: 
                 edge1 = [self.bin_edges[i][num1-1], self.bin_edges[i][num1]]
             
             if num2 == 0:
-                edge2 = self.bin_edges[i][0]
+                edge2 = [self.bin_edges[i][0]]*2
             elif num2 == self.alphabet_size - 1:
-                edge2 = self.bin_edges[i][-1]
+                edge2 = [self.bin_edges[i][-1]]*2
             else:
                 edge2 = [self.bin_edges[i][num2-1], self.bin_edges[i][num2]]
 
