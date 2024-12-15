@@ -6,6 +6,7 @@ import math
 from pyts.approximation import SymbolicFourierApproximation
 from pyts.transformation import BOSS
 from sklearn.utils import check_array
+from scipy.fftpack import ifft
 
 ##########################################################################################################################
 ################################################### SFA / BOSS ###########################################################
@@ -44,6 +45,27 @@ class SFA:
         if self.X_test is not None:
             X_test_sfa = self.sfa.transform(self.X_test)
             self.symbolic_data_test = X_test_sfa
+
+    def reconstruct_series(self, ts_symbolic):
+        # Initialisation des coefficients de Fourier
+        dft_recov = np.zeros(len(ts_symbolic), dtype=complex)
+        
+        for i in range(len(ts_symbolic)):
+            # Conversion du symbole en index
+            num1 = ord(ts_symbolic[i]) - ord('a')
+
+            # Reconstruction du coefficient
+            if num1 == 0: 
+                dft_recov[i] = self.bin_edges[i][0]  # Première borne
+            elif num1 == self.alphabet_size - 1:
+                dft_recov[i] = self.bin_edges[i][-1]  # Dernière borne
+            else: 
+                dft_recov[i] = (self.bin_edges[i][num1-1] + self.bin_edges[i][num1]) / 2  # Milieu de l'intervalle
+
+        # Transformée inverse pour reconstruire la série
+        recov = np.fft.ifft(dft_recov, n=len(self.X_train[0])).real
+
+        return recov
         
     def SFA_distance(self, sequence1, sequence2):
         """
@@ -104,35 +126,37 @@ class BOSS_class:
         self.X_test = X_test
         self.strategy = strategy
 
-        self.BOSS = BOSS(word_size=self.word_size, n_bins=self.alphabet_size, window_size=self.window_size, strategy=self.strategy)
+        self.BOSS = BOSS(word_size=self.word_size, n_bins=self.alphabet_size, window_size=self.window_size, strategy=self.strategy, sparse=False)
         self.symbolic_data = None
         self.symbolic_data_test = None
 
     def symbolize_BOSS(self): 
 
-        def get_words_from_boss_representation(boss_representation, word_size):
-            """
-            Convertit la représentation BOSS en mots symboliques.
+        #def get_words_from_boss_representation(boss_representation, word_size):
+        """
+        Convertit la représentation BOSS en mots symboliques.
 
-            Parameters:
-                boss_representation (sparse matrix): Représentation BOSS.
-                word_size (int): Taille du mot symbolique.
+        Parameters:
+            boss_representation (sparse matrix): Représentation BOSS.
+            word_size (int): Taille du mot symbolique.
 
-            Returns:
-                words (list): Liste des mots symboliques.
-            """
-            data = boss_representation.toarray().flatten()  # Convertir la matrice sparse en array dense
-            words = [data[i:i + word_size] for i in range(0, len(data), word_size)]  # Regrouper en mots
-            return words
+        Returns:
+            words (list): Liste des mots symboliques.
+        """
+            #data = boss_representation.toarray().flatten()  # Convertir la matrice sparse en array dense
+           # words = [data[i:i + word_size] for i in range(0, len(data), word_size)]  # Regrouper en mots
+            #return words
         
         X_train_BOSS = self.BOSS.fit_transform(self.X_train)
-        self.symbolic_data = get_words_from_boss_representation(X_train_BOSS, self.word_size)
+        #self.symbolic_data = get_words_from_boss_representation(X_train_BOSS, self.word_size)
+        self.symbolic_data = X_train_BOSS
 
         if self.X_test is not None:
             X_test_BOSS = self.BOSS.transform(self.X_test)
-            self.symbolic_data_test = get_words_from_boss_representation(X_test_BOSS, self.word_size)
+            #self.symbolic_data_test = get_words_from_boss_representation(X_test_BOSS, self.word_size)
+            self.symbolic_data_test = X_test_BOSS
         
-    def boss_dist(x, y):
+    def boss_dist(self, x, y):
         ## EXTRACTED FROM PYTS PACKAGE
         """Return the BOSS distance between two arrays.
 

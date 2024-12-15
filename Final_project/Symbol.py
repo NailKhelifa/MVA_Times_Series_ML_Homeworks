@@ -12,11 +12,12 @@ from tslearn.utils import to_time_series_dataset
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import precision_recall_curve, average_precision_score
 from sklearn.metrics import roc_curve, auc
-from ASTRIDE import ASTRIDE_transf
-from SFA import SFA, BOSS_class
 from pyts.approximation import SymbolicFourierApproximation
 from pyts.transformation import BOSS
 
+from ASTRIDE import ASTRIDE_transf
+from SFA import SFA
+from SFA import BOSS_class
 
 
 
@@ -306,7 +307,7 @@ class SYMBOLS():
         predictions = []
         # make a prediction based on k-nn for each symbolized series in the test dataset
         for j in range(self.num_test_samples):
-            print(j / self.num_test_samples)
+            
             # Calcul des distances entre x_test et tous les points d'entraînement
             distances = [self.BOSS.boss_dist(self.symbolized_x_test[j], self.symbolized_x_train[i]) for i in range(self.num_train_samples)]
             
