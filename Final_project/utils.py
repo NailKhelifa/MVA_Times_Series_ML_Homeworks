@@ -155,7 +155,13 @@ def std_scaler(df):
     Returns:
         pd.DataFrame: DataFrame avec les séries temporelles standardisées.
     """
-    return (df - df.mean(axis=1).values[:, np.newaxis]) / df.std(axis=1).values[:, np.newaxis]
+    means = df.mean(axis=0)
+    df_centered = df - means
+
+    std_devs = df.std(axis=0)
+    df_normalized = df_centered / std_devs  
+
+    return df_normalized
 
 def describe_ecg_dataset(x_train, y_train, x_test, y_test):
 
