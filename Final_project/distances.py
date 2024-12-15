@@ -166,3 +166,6 @@ class TRENDIST(MINDIST):
         tsx_dist = np.sqrt(compression_ratio * mean_distance + ((compression_ratio / w) ** 2) * trend_distance)
         
         return tsx_dist
+
+
+
