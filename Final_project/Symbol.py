@@ -13,13 +13,16 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import precision_recall_curve, average_precision_score
 from sklearn.metrics import roc_curve, auc
 from ASTRIDE import ASTRIDE_transf
-from SFA import SFA
+from SFA import SFA, BOSS_class
+from pyts.approximation import SymbolicFourierApproximation
+from pyts.transformation import BOSS
+
 
 
 
 class SYMBOLS():
 
-    def __init__(self, X_train, X_test, method='SAX', k=1, num_segments=20, alphabet_size=16, angle_breakpoint_alphabet_size=5, Na = 4, Ns = 4):
+    def __init__(self, X_train, X_test, method='SAX', k=1, num_segments=20, alphabet_size=16, angle_breakpoint_alphabet_size=5, Na = 4, Ns = 4, word_size=4, window_size=10):
         self.k = k # number of neighbors for the prediction 
         self.method = method
         self.X_train = X_train
@@ -40,6 +43,11 @@ class SYMBOLS():
 
         if self.method == "SFA":
             self.sfa_ = SFA(self.X_train, num_coefs=self.num_segments, alphabet_size= self.alphabet_size, X_test=self.X_test)
+
+        if self.method == 'BOSS': 
+            self.window_size = window_size
+            self.word_size = word_size
+            self.BOSS = BOSS_class(self.X_train, self.word_size, self.window_size, self.alphabet_size, X_test=self.X_test)
 
         # extract train labels (y_train) and train features (x_train) from X_train
         self.X_train.columns = list(self.X_train.columns[:-1]) + ['label']
@@ -72,6 +80,12 @@ class SYMBOLS():
             self.sfa_.symbolize_SFA()
             self.symbolized_x_train = self.sfa_.symbolic_data
             self.symbolized_x_test = self.sfa_.symbolic_data_test
+            return
+        
+        elif self.method == 'BOSS':
+            self.BOSS.symbolize_BOSS()
+            self.symbolized_x_train = self.BOSS.symbolic_data
+            self.symbolized_x_test = self.BOSS.symbolic_data_test
             return
 
         else: 
@@ -268,6 +282,33 @@ class SYMBOLS():
             print(j / self.num_test_samples)
             # Calcul des distances entre x_test et tous les points d'entraînement
             distances = [self.sfa_.SFA_distance(self.symbolized_x_test[j], self.symbolized_x_train[i]) for i in range(self.num_train_samples)]
+            
+            # Trier les distances et obtenir les indices des k plus proches voisins
+            k_indices = np.argsort(distances)[:self.k]
+            
+            # Récupérer les classes des k plus proches voisins
+            k_nearest_labels = [self.y_train[i] for i in k_indices]
+            
+            # Classification : renvoyer la classe la plus fréquente
+            most_common = Counter(k_nearest_labels).most_common(1)
+            predictions.append(most_common[0][0])
+
+        self.predictions = predictions
+        # Calcul de l'exactitude : proportion de bonnes prédictions
+        self.accuracy = np.mean(predictions == self.y_test)
+        
+        print(f"Accuracy:{self.accuracy}")
+
+        ###################################### BOSS_KNN ######################################
+
+    def predict_BOSS(self):
+
+        predictions = []
+        # make a prediction based on k-nn for each symbolized series in the test dataset
+        for j in range(self.num_test_samples):
+            print(j / self.num_test_samples)
+            # Calcul des distances entre x_test et tous les points d'entraînement
+            distances = [self.BOSS.boss_dist(self.symbolized_x_test[j], self.symbolized_x_train[i]) for i in range(self.num_train_samples)]
             
             # Trier les distances et obtenir les indices des k plus proches voisins
             k_indices = np.argsort(distances)[:self.k]
