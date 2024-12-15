@@ -311,7 +311,7 @@ class SAX_transform:
         slope_breakpoints = norm.ppf(np.linspace(0, 1, Ns + 1)[1:-1], loc=0, scale=np.sqrt(slope_variance))
 
         reconstructed_series = []
-        segment_size = len(self.series) // self.num_segments
+        segment_size = (len(self.series) // self.num_segments) + 1
 
         for symbol in OneD_SAX:
 
@@ -333,7 +333,8 @@ class SAX_transform:
             else:
                 approx_slope = (slope_breakpoints[slope_symbol - 1] + slope_breakpoints[slope_symbol]) / 2 
 
-            segment = [approx_avg + approx_slope * (t - 1) for t in range(1, segment_size + 1)]
+            segment = [approx_avg + approx_slope * (t-1) for t in range(1, segment_size + 1)]
+            
             reconstructed_series.extend(segment)
 
         return reconstructed_series

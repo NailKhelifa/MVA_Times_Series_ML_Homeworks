@@ -29,6 +29,8 @@ class ASTRIDE_transf:
         ## On initialise les données symboliques à None
         self.symbolic_data = None
         self.symbolic_data_test = None
+        self.segmentation_adaptive()
+        self.transform_adaptive(self.X_train)
 
 
     def segmentation_adaptive(self, *args, **kwargs):

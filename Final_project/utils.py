@@ -157,4 +157,19 @@ def std_scaler(df):
     """
     return (df - df.mean(axis=1).values[:, np.newaxis]) / df.std(axis=1).values[:, np.newaxis]
 
+def describe_ecg_dataset(x_train, y_train, x_test, y_test):
+
+    print(f"Nombre d'exemples dans l'ensemble d'entraînement : {x_train.shape[0]}")
+    print(f"Nombre d'exemples dans l'ensemble de test : {x_test.shape[0]}")
+    print(f"Longueur des séries temporelles : {x_train.shape[1]}")
+    print("\n")
+
+    # Répartition des classes
+    print("Répartition des classes (Ensemble d'entraînement) :")
+    print(y_train.value_counts().sort_index())
+    print("\nRépartition des classes (Ensemble de test) :")
+    print(y_test.value_counts().sort_index())
+    print("\n")
+
+
 
