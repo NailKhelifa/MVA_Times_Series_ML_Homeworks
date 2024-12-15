@@ -204,8 +204,6 @@ class SYMBOLS():
         self.predictions = predictions
         # Calcul de l'exactitude : proportion de bonnes prédictions
         self.accuracy = np.mean(predictions == self.y_test)
-        
-        print(f"Accuracy:{self.accuracy}")
 
     def predict_oneD(self): 
         
@@ -244,7 +242,6 @@ class SYMBOLS():
         self.predictions = predictions
         self.accuracy = np.mean(predictions == self.y_test)
 
-        print(f"Accuracy:{self.accuracy}")
 
         ###################################### ASTRIDE_KNN ######################################
 
@@ -271,7 +268,6 @@ class SYMBOLS():
         # Calcul de l'exactitude : proportion de bonnes prédictions
         self.accuracy = np.mean(predictions == self.y_test)
         
-        print(f"Accuracy:{self.accuracy}")
 
     ###################################### SFA_KNN ######################################
 
@@ -298,7 +294,6 @@ class SYMBOLS():
         # Calcul de l'exactitude : proportion de bonnes prédictions
         self.accuracy = np.mean(predictions == self.y_test)
         
-        print(f"Accuracy:{self.accuracy}")
 
         ###################################### BOSS_KNN ######################################
 
@@ -325,7 +320,6 @@ class SYMBOLS():
         # Calcul de l'exactitude : proportion de bonnes prédictions
         self.accuracy = np.mean(predictions == self.y_test)
         
-        print(f"Accuracy:{self.accuracy}")
 
 
 
