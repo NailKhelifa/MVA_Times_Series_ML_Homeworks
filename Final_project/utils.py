@@ -2,11 +2,13 @@ import numpy as np
 import scipy.stats as stats # for the breakpoints in SAX
 import pandas as pd
 from scipy.stats import norm
+from statsmodels.tsa.stattools import acf
+from scipy import signal
 import matplotlib.pyplot as plt
 import seaborn as sns
 from Symbol import SYMBOLS
 import os
-from matplotlib import cm
+import matplotlib as cm
 
 ##########################################################################################################################
 ###################################################### DATA LOADING ######################################################
@@ -82,6 +84,12 @@ def generate_data(type="ECG200"):
     elif type == "adiac":
         train_path = os.path.join(os.getcwd(), "datasets/classification/Adiac/Adiac_TRAIN.ts")
         test_path = os.path.join(os.getcwd(), "datasets/classification/Adiac/Adiac_TEST.ts")
+    elif type == "catsanddogs":
+        train_path = os.path.join(os.getcwd(), "datasets/classification/CatsDogs/CatsDogs_TRAIN.ts")
+        test_path = os.path.join(os.getcwd(), "datasets/classification/CatsDogs/CatsDogs_TEST.ts")
+    elif type == "acsf1":
+        train_path = os.path.join(os.getcwd(), "datasets/classification/ACSF1/ACSF1_TRAIN.ts")
+        test_path = os.path.join(os.getcwd(), "datasets/classification/ACSF1/ACSF1_TEST.ts")
 
     X_train = pd.read_csv(train_path, 
                         sep=",", 
@@ -105,13 +113,27 @@ def generate_data(type="ECG200"):
 ####################################################### UTILS FUNC #######################################################
 ##########################################################################################################################
 
+def describe_ecg_dataset(x_train, y_train, x_test, y_test):
+
+    print(f"Number of examples in the training set: {x_train.shape[0]}")
+    print(f"Number of examples in the test set: {x_test.shape[0]}")
+    print(f"Length of the time series: {x_train.shape[1]}")
+    print("\n")
+
+    # Class distribution
+    print("Class distribution (Training set):")
+    print(y_train.value_counts().sort_index())
+    print("\nClass distribution (Test set):")
+    print(y_test.value_counts().sort_index())
+    print("\n")
+
 def plot_classes(df0, df1, num_seg):
 
-    # Convertir en numérique (forcer les erreurs à NaN) pour df1
+    # Convert to numeric (force errors to NaN) for df1
     df1 = df1.apply(pd.to_numeric, errors='coerce')
-    df1 = df1.fillna(0)  # Remplir les NaN avec 0
+    df1 = df1.fillna(0)  # Fill NaN with 0
 
-    # Calcul pour df1
+    # Calculation for df1
     mean_series1 = df1.mean(axis=0)
     ci_low1 = mean_series1 - 1.96 * df1.sem(axis=0)
     ci_high1 = mean_series1 + 1.96 * df1.sem(axis=0)
@@ -125,11 +147,11 @@ def plot_classes(df0, df1, num_seg):
     ci_low1 = ci_low1[valid_indices]
     ci_high1 = ci_high1[valid_indices]
 
-    # Convertir en numérique (forcer les erreurs à NaN) pour df0
+    # Convert to numeric (force errors to NaN) for df0
     df0 = df0.apply(pd.to_numeric, errors='coerce')
-    df0 = df0.fillna(0)  # Remplir les NaN avec 0
+    df0 = df0.fillna(0)  # Fill NaN with 0
 
-    # Calcul pour df0
+    # Calculation for df0
     mean_series0 = df0.mean(axis=0)
     ci_low0 = mean_series0 - 1.96 * df0.sem(axis=0)
     ci_high0 = mean_series0 + 1.96 * df0.sem(axis=0)
@@ -143,96 +165,198 @@ def plot_classes(df0, df1, num_seg):
     ci_low0 = ci_low0[valid_indices0]
     ci_high0 = ci_high0[valid_indices0]
 
-    # Créer une figure avec deux sous-graphiques côte à côte
+    # Create a figure with two subplots side by side
     fig, axes = plt.subplots(1, 2, figsize=(16, 6))
 
-    # Premier subplot - df1
-    sns.lineplot(ax=axes[0], x=mean_series1.index, y=mean_series1, label="Moyenne", color="blue")
-    axes[0].fill_between(mean_series1.index, ci_low1, ci_high1, color="blue", alpha=0.2, label="IC 95%")
+    # First subplot - df1
+    sns.lineplot(ax=axes[0], x=mean_series1.index, y=mean_series1, label="Mean", color="blue")
+    axes[0].fill_between(mean_series1.index, ci_low1, ci_high1, color="blue", alpha=0.2, label="95% CI")
     if num_seg is not None:
         for i in range(num_seg+1):
             axes[0].axvline(x= i * (len(mean_series1.index) // num_seg), color="red", linestyle="--", alpha=0.7)
-    axes[0].set_title("Classe 1", fontsize=14)
+    axes[0].set_title("Class 1", fontsize=14)
     axes[0].set_xlabel("Index", fontsize=12)
-    axes[0].set_ylabel("Valeur", fontsize=12)
+    axes[0].set_ylabel("Value", fontsize=12)
     axes[0].legend()
 
-    # Deuxième subplot - df0
-    sns.lineplot(ax=axes[1], x=mean_series0.index, y=mean_series0, label="Moyenne", color="blue")
-    axes[1].fill_between(mean_series0.index, ci_low0, ci_high0, color="blue", alpha=0.2, label="IC 95%")
+    axes[0].grid(visible=True, linestyle='--', linewidth=0.5, color='gray', alpha=0.7)
+
+    # Second subplot - df0
+    sns.lineplot(ax=axes[1], x=mean_series0.index, y=mean_series0, label="Mean", color="blue")
+    axes[1].fill_between(mean_series0.index, ci_low0, ci_high0, color="blue", alpha=0.2, label="95% CI")
     if num_seg is not None:
         for i in range(num_seg+1):
             axes[1].axvline(x= i * (len(mean_series0.index) // num_seg), color="red", linestyle="--", alpha=0.7)
-    axes[1].set_title("Classe 2", fontsize=14)
+    axes[1].set_title("Class 2", fontsize=14)
     axes[1].set_xlabel("Index", fontsize=12)
-    axes[1].set_ylabel("Valeur", fontsize=12)
+    axes[1].set_ylabel("Value", fontsize=12)
     axes[1].legend()
 
-    # Ajuster l'espacement entre les subplots
+    axes[1].grid(visible=True, linestyle='--', linewidth=0.5, color='gray', alpha=0.7)
+
+
+    # Adjust spacing between subplots
     plt.tight_layout()
     plt.show()
 
+def plot_multiple_classes(df_list, num_seg):
 
-def plot_classes_multisubplots(data, num_classes, num_seg=None):
-    """
-    Plot multiple classes in subplots with confidence intervals.
-    
-    Parameters:
-    - data: DataFrame contenant les données avec une colonne "label" indiquant les classes.
-    - num_classes: Nombre total de classes dans les données.
-    - num_seg: Nombre de segments pour ajouter des lignes verticales (optionnel).
-    """
-    # Vérifier que les colonnes autres que "label" contiennent des données numériques
-    numeric_columns = data.columns.difference(['label'])
-    data[numeric_columns] = data[numeric_columns].apply(pd.to_numeric, errors='coerce')
-    
-    # Remplacer les NaN par 0 (ou appliquer une autre stratégie si nécessaire)
-    data[numeric_columns] = data[numeric_columns].fillna(0)
+    mean_df = []
+    low_df = []
+    high_df = []
 
-    # Créer une grille de subplots
-    num_rows = (num_classes // 6) + (1 if num_classes % 6 != 0 else 0)  # 6 colonnes par ligne
-    num_cols = 6  # Nombre maximum de colonnes
-    fig, axes = plt.subplots(num_rows, num_cols, figsize=(20, num_rows * 4), constrained_layout=True)
-    axes = axes.ravel()  # Aplatir les subplots pour une gestion plus simple
+    for df1 in df_list:
+        # Convert to numeric (force errors to NaN) for df1
+        df1 = df1.apply(pd.to_numeric, errors='coerce')
+        df1 = df1.fillna(0)  # Fill NaN with 0
 
-    # Itérer sur chaque classe
-    for i in range(num_classes):
-        ax = axes[i]
-        # Filtrer les données pour la classe actuelle
-        df_class = data[data["label"] == i + 1].iloc[:, :-1]  # Exclure la colonne "label"
-        
-        # Convertir en numérique et gérer les NaN (déjà fait, mais peut être rappelé ici si nécessaire)
-        df_class = df_class.apply(pd.to_numeric, errors='coerce').fillna(0)
+        # Calculation for df1
+        mean_series1 = df1.mean(axis=0)
+        ci_low1 = mean_series1 - 1.96 * df1.sem(axis=0)
+        ci_high1 = mean_series1 + 1.96 * df1.sem(axis=0)
 
-        # Calculer la moyenne et les intervalles de confiance
-        mean_series = df_class.mean(axis=0)
-        ci_low = mean_series - 1.96 * df_class.sem(axis=0)
-        ci_high = mean_series + 1.96 * df_class.sem(axis=0)
+        mean_series1.index = pd.to_numeric(mean_series1.index, errors='coerce')
+        ci_low1 = pd.to_numeric(ci_low1, errors='coerce')
+        ci_high1 = pd.to_numeric(ci_high1, errors='coerce')
 
-        # Traçage de la moyenne et des intervalles de confiance
-        sns.lineplot(ax=ax, x=mean_series.index, y=mean_series, label=f"Classe {i + 1}", color="blue")
-        ax.fill_between(mean_series.index, ci_low, ci_high, color="blue", alpha=0.2, label="IC 95%")
-        
-        # Ajouter des segments verticaux si `num_seg` est défini
+        valid_indices = ~ci_low1.isna() & ~ci_high1.isna()
+        mean_series1 = mean_series1[valid_indices]
+        ci_low1 = ci_low1[valid_indices]
+        ci_high1 = ci_high1[valid_indices]
+
+        mean_df.append(mean_series1)
+        low_df.append(ci_low1)
+        high_df.append(ci_high1)
+
+    # Create a figure with two subplots side by side
+    fig, axes = plt.subplots(5, 2, figsize=(16, 12))
+
+    # Flatten the axes for easier iteration (instead of a 2D matrix)
+    axes_flat = axes.flat
+
+    for i in range(len(df_list)):
+        ax = axes_flat[i]
+        sns.lineplot(ax=ax, x=mean_df[i].index, y=mean_df[i], label="Mean", color="blue")
+        ax.fill_between(mean_df[i].index, low_df[i], high_df[i], color="blue", alpha=0.2, label="95% CI")
         if num_seg is not None:
-            for j in range(num_seg + 1):
-                ax.axvline(x=j * (len(mean_series.index) // num_seg), color="red", linestyle="--", alpha=0.7)
-        
-        # Ajouter des titres et des légendes
-        ax.set_title(f"Classe {i + 1}", fontsize=12)
-        ax.set_xlabel("Index", fontsize=10)
-        ax.set_ylabel("Valeur", fontsize=10)
-        ax.legend(fontsize=8)
+            for i in range(num_seg+1):
+                ax.axvline(x= i * (len(mean_df[i].index) // num_seg), color="red", linestyle="--", alpha=0.7)
+        ax.set_title("Class 1", fontsize=14)
+        ax.set_xlabel("Index", fontsize=12)
+        ax.set_ylabel("Value", fontsize=12)
+        ax.legend()
 
-    # Supprimer les subplots inutilisés si num_classes < num_rows * num_cols
-    for j in range(num_classes, len(axes)):
-        fig.delaxes(axes[j])
+        ax.grid(visible=True, linestyle='--', linewidth=0.5, color='gray', alpha=0.7)
 
-    # Ajouter un titre global
-    fig.suptitle("Visualisation des classes", fontsize=16)
+    # Adjust spacing between subplots
+    plt.tight_layout()
     plt.show()
 
+def plot_acf_mean_series(df_list, data_type = "2class", conf_level=0.95):
+    """
+    Plots the autocorrelation function of the mean time series for each dataset in df_list,
+    with a 95% confidence interval band.
+    
+    Parameters:
+    - df_list : list of DataFrames. Each DataFrame contains n time series of length p.
+    - conf_level : float, confidence level for the confidence interval (default 95%).
+    """
+    if data_type == "2class":
+        # Create a figure with two subplots side by side
+        fig, axes = plt.subplots(1, 2, figsize=(16, 6))
 
+        # Flatten the axes for easier iteration (instead of a 2D matrix)
+        axes_flat = axes.flat
+
+    else: 
+        # Create a figure with two subplots side by side
+        fig, axes = plt.subplots(5, 2, figsize=(16, 12))
+
+        # Flatten the axes for easier iteration (instead of a 2D matrix)
+        axes_flat = axes.flat
+
+    for idx, df in enumerate(df_list):
+        ax = axes_flat[idx]
+        print(f"Processing class {idx + 1}...")
+
+        # Compute the mean time series
+        mean_series = df.mean(axis=0)
+
+        # Compute autocorrelation and confidence intervals
+        acf_values, conf_int = acf(mean_series, alpha=1 - conf_level, fft=True, nlags=len(mean_series)-1)
+        
+        # Confidence interval
+        lower_bound, upper_bound = conf_int[:, 0], conf_int[:, 1]
+        
+        # Plot the ACF with confidence intervals
+        ax.plot(acf_values, label='Autocorrelation', color='blue')
+        ax.fill_between(range(len(acf_values)), lower_bound, upper_bound, color='lightblue', alpha=0.5, label=f'{int(conf_level*100)}% Confidence Interval')
+        ax.axhline(0, linestyle='--', color='gray', linewidth=1)
+
+        # Add labels, title, and legend
+        ax.set_title(f"Autocorrelation Function (Class {idx + 1})", fontsize=14)
+        ax.set_xlabel("Lag", fontsize=12)
+        ax.set_ylabel("Autocorrelation", fontsize=12)
+        ax.legend(fontsize=10)
+
+        ax.grid(visible=True, linestyle='--', linewidth=0.5, color='gray', alpha=0.7)
+
+
+    plt.tight_layout()
+    plt.show()
+
+def plot_periodogram_mean_series(df_list, data_type = "2class", sampling_frequency=1.0):
+    """
+    Plots the periodogram of the mean time series for each dataset in df_list.
+    
+    Parameters:
+    - df_list : list of DataFrames. Each DataFrame contains n time series of length p.
+    - sampling_frequency : float, the sampling frequency of the time series (default is 1.0).
+    """
+    if data_type == "2class":
+        # Create a figure with two subplots side by side
+        fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+
+        # Flatten the axes for easier iteration (instead of a 2D matrix)
+        axes_flat = axes.flat
+
+    else: 
+        # Create a figure with two subplots side by side
+        fig, axes = plt.subplots(5, 2, figsize=(16, 12))
+
+        # Flatten the axes for easier iteration (instead of a 2D matrix)
+        axes_flat = axes.flat
+
+    for idx, df in enumerate(df_list):
+        ax = axes_flat[idx]
+
+        print(f"Processing dataset {idx + 1}...")
+        
+        # Compute the mean time series
+        mean_series = df.mean(axis=0)
+        
+        # Compute the periodogram
+        frequencies, power_spectrum = signal.periodogram(mean_series, sampling_frequency)
+        
+        # Plot the periodogram
+        ax.plot(frequencies, power_spectrum, color='blue', lw=1.5, label='Power Spectrum')
+        
+        # Highlight the dominant frequency
+        dominant_frequency_idx = np.argmax(power_spectrum)
+        dominant_frequency = frequencies[dominant_frequency_idx]
+        ax.axvline(dominant_frequency, color='red', linestyle='--', 
+                   label=f'Dominant Frequency = {dominant_frequency:.3f} Hz')
+
+        # Add labels, title, and legend
+        ax.set_title(f"Periodogram (Class {idx + 1})", fontsize=14)
+        ax.set_xlabel("Frequency (Hz)", fontsize=12)
+        ax.set_ylabel("Power Spectral Density", fontsize=12)
+        ax.legend(fontsize=10)
+
+        ax.grid(visible=True, linestyle='--', linewidth=0.5, color='gray', alpha=0.7)
+
+    plt.tight_layout()
+    plt.show()
 ##########################################################################################################################
 ################################ BEFORE SYMOBLIZATION:  PRE-PROCESSING SERIES ############################################
 ##########################################################################################################################
@@ -255,19 +379,6 @@ def std_scaler(df):
 
     return df_normalized
 
-def describe_ecg_dataset(x_train, y_train, x_test, y_test):
-
-    print(f"Nombre d'exemples dans l'ensemble d'entraînement : {x_train.shape[0]}")
-    print(f"Nombre d'exemples dans l'ensemble de test : {x_test.shape[0]}")
-    print(f"Longueur des séries temporelles : {x_train.shape[1]}")
-    print("\n")
-
-    # Répartition des classes
-    print("Répartition des classes (Ensemble d'entraînement) :")
-    print(y_train.value_counts().sort_index())
-    print("\nRépartition des classes (Ensemble de test) :")
-    print(y_test.value_counts().sort_index())
-    print("\n")
 
 def plot_KNN_accuracies(X_train, X_test):
     
