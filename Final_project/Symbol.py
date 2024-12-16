@@ -124,6 +124,8 @@ class SYMBOLS():
                 train_symbolic_data[i] = symbolic_seq
                 
             else:
+                if type(train_symbolic_data) == np.ndarray:
+                    train_symbolic_data = pd.DataFrame(np.zeros((self.num_train_samples, 1)))
                 train_symbolic_data.iloc[i, :] = symbolic_seq
 
         ## symbolize the test time series 
@@ -155,6 +157,8 @@ class SYMBOLS():
             if self.method == "oneD_SAX":
                 test_symbolic_data[i] = symbolic_seq
             else:
+                if type(test_symbolic_data) == np.ndarray:
+                    test_symbolic_data = pd.DataFrame(np.zeros((self.num_test_samples, 1)))
                 test_symbolic_data.iloc[i, :] = symbolic_seq
 
         ## save the symbolized time series as attributes

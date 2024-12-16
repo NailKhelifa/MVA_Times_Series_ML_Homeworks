@@ -317,14 +317,14 @@ def plot_KNN_accuracies(X_train, X_test):
         SFA_KNN.predict_SFA()
         sfa_acc[i-2] = SFA_KNN.accuracy
 
-        #BOSS_KNN = SYMBOLS(
-                    #X_train, 
-                    #X_test, 
-                    #'BOSS', 
-                    #num_segments=10, 
-                    #alphabet_size=i)
-        #BOSS_KNN._predict()
-        #boss_acc[i-2] = BOSS_KNN.accuracy
+        BOSS_KNN = SYMBOLS(
+                    X_train, 
+                    X_test, 
+                    'BOSS', 
+                    num_segments=10, 
+                    alphabet_size=i, word_size=2, window_size=10)
+        BOSS_KNN.predict_BOSS()
+        boss_acc[i-2] = BOSS_KNN.accuracy
 
         ASTRIDE_KNN = SYMBOLS(
                     X_train, 
@@ -354,6 +354,50 @@ def plot_KNN_accuracies(X_train, X_test):
     plt.title("Accuracy en fonction de la taille de l'alphabet - 10 segments", fontsize=14)
     plt.xlabel("Taille de l'alphabet", fontsize=12)
     plt.ylabel("Accuracy", fontsize=12)
+    plt.legend(loc='best', fontsize=10)
+    plt.grid(True)
+    plt.show()
+
+
+def plot_3D(x_axis, y_axis, z_axis, title, x_label, y_label, z_label): 
+    X, Y = np.meshgrid(x_axis, y_axis)
+    Z = z_axis
+
+    # On convertit en données plates
+    x_flat = X.ravel()  
+    y_flat = Y.ravel()  
+    z_flat = np.zeros_like(x_flat) 
+    dz = Z.ravel()  
+
+    dx = dy = 0.8  # Largeur des barres 
+
+    fig = plt.figure(figsize=(12, 8))
+    ax = fig.add_subplot(111, projection='3d')
+
+    colors = cm.coolwarm(dz / dz.max())  # Normaliser les hauteurs (dz) pour utiliser la colormap
+
+    ax.bar3d(x_flat, y_flat, z_flat, dx, dy, dz, shade=True, color=colors, edgecolor='black', alpha=0.9)
+
+    ax.invert_yaxis() 
+    ax.set_xlabel(x_label, labelpad=10)
+    ax.set_ylabel(y_label, labelpad=10)
+    ax.set_zlabel(z_label, labelpad=10)
+    plt.title(title, fontsize=16)
+
+    ax.view_init(elev=30, azim=120) 
+    plt.show()
+
+def plot_recons(TS_test, r1, r2, r3, r4, method): 
+    
+    plt.figure(figsize=(8, 5))
+    plt.plot(np.array(TS_test), color='blue', label="Série Initiale")
+    plt.plot(r1, color='red', label=f"Reconstruction from {method} - 10 segments, 4 symboles")
+    plt.plot(r2, color='orange', label=f"Reconstruction from {method} - 20 segments, 4 symboles")
+    plt.plot(r3, color='green', label=f"Reconstruction from {method} - 10 segments, 8 symboles")
+    plt.plot(r4, color='black', label=f"Reconstruction from {method} - 20 segments, 8 symboles")
+    plt.title(f"Différentes reconstructions à partir de {method}", fontsize=14)
+    plt.xlabel("Time", fontsize=12)
+    plt.ylabel("Valeurs", fontsize=12)
     plt.legend(loc='best', fontsize=10)
     plt.grid(True)
     plt.show()
