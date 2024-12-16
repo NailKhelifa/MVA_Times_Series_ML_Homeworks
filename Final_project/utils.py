@@ -5,6 +5,7 @@ from scipy.stats import norm
 import matplotlib.pyplot as plt
 import seaborn as sns
 from Symbol import SYMBOLS
+import os
 
 ##########################################################################################################################
 ###################################################### DATA LOADING ######################################################
@@ -69,6 +70,35 @@ def load_CBF_dataset(path_test, path_train):
 
     # Retour des DataFrames d'entraînement et de test
     return cbf_df_train, cbf_df_test
+
+def generate_data(type="ECG200"):
+    if type == "ECG200":
+        train_path = os.path.join(os.getcwd(), "datasets/classification/ECG200/ECG200_TRAIN.ts")
+        test_path = os.path.join(os.getcwd(), "datasets/classification/ECG200/ECG200_TEST.ts")
+    elif type == "computers":
+        train_path = os.path.join(os.getcwd(), "datasets/classification/Computers/Computers_TRAIN.ts")
+        test_path = os.path.join(os.getcwd(), "datasets/classification/Computers/Computers_TEST.ts")
+    elif type == "Adiac":
+        train_path = os.path.join(os.getcwd(), "datasets/classification/Adiac/Adiac_TRAIN.ts")
+        test_path = os.path.join(os.getcwd(), "datasets/classification/Adiac/Adiac_TEST.ts")
+
+    X_train = pd.read_csv(train_path, 
+                        sep=",", 
+                        header=None
+                        )
+
+    X_train.columns = list(X_train.columns[:-1]) + ['label']
+    x_train, y_train = X_train.iloc[:, :-1], X_train["label"]
+
+    X_test = pd.read_csv(test_path, 
+                      sep=",", 
+                      header=None
+                      )
+
+    X_test.columns = list(X_test.columns[:-1]) + ['label']
+    x_test, y_test = X_test.iloc[:, :-1], X_test["label"]
+
+    return x_train, y_train, x_test, y_test
 
 ##########################################################################################################################
 ####################################################### UTILS FUNC #######################################################
