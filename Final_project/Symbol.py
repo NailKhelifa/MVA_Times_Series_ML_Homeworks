@@ -276,7 +276,7 @@ class SYMBOLS():
         predictions = []
         # make a prediction based on k-nn for each symbolized series in the test dataset
         for j in range(self.num_test_samples):
-            print(j / self.num_test_samples)
+            
             # Calcul des distances entre x_test et tous les points d'entraînement
             distances = [self.sfa_.SFA_distance(self.symbolized_x_test[j], self.symbolized_x_train[i]) for i in range(self.num_train_samples)]
             

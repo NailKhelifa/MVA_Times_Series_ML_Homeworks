@@ -4,6 +4,7 @@ import pandas as pd
 from scipy.stats import norm
 import matplotlib.pyplot as plt
 import seaborn as sns
+from Symbol import SYMBOLS
 
 ##########################################################################################################################
 ###################################################### DATA LOADING ######################################################
@@ -176,6 +177,96 @@ def describe_ecg_dataset(x_train, y_train, x_test, y_test):
     print("\nRépartition des classes (Ensemble de test) :")
     print(y_test.value_counts().sort_index())
     print("\n")
+
+def plot_KNN_accuracies(X_train, X_test):
+    
+    abs_x = np.arange(2, 15)
+    sax_acc = np.zeros(13)
+    esax_acc = np.zeros(13)
+    tsax_acc = np.zeros(13)
+    oneD_sax_acc = np.zeros(13)
+    sfa_acc = np.zeros(13)
+    boss_acc = np.zeros(13)
+    astride_acc = np.zeros(13)
+
+    for i in range(2, 15):
+
+        SAX_KNN = SYMBOLS(
+                    X_train, 
+                    X_test, 
+                    'SAX', 
+                    num_segments=10, 
+                    alphabet_size=i)
+        SAX_KNN._predict()
+        sax_acc[i-2] = SAX_KNN.accuracy
+
+        ESAX_KNN = SYMBOLS(
+                    X_train, 
+                    X_test, 
+                    'ESAX', 
+                    num_segments=10, 
+                    alphabet_size=i)
+        ESAX_KNN._predict()
+        esax_acc[i-2] = ESAX_KNN.accuracy
+
+        #TSAX_KNN = SYMBOLS(
+                    #X_train, 
+                    #X_test, 
+                    #'TSAX', 
+                    #num_segments=10, 
+                    #alphabet_size=i)
+        #TSAX_KNN._predict()
+        #tsax_acc[i-2] = TSAX_KNN.accuracy
+
+        SFA_KNN = SYMBOLS(
+                    X_train, 
+                    X_test, 
+                    'SFA',
+                    num_segments=10,
+                    alphabet_size=i)
+        SFA_KNN.predict_SFA()
+        sfa_acc[i-2] = SFA_KNN.accuracy
+
+        #BOSS_KNN = SYMBOLS(
+                    #X_train, 
+                    #X_test, 
+                    #'BOSS', 
+                    #num_segments=10, 
+                    #alphabet_size=i)
+        #BOSS_KNN._predict()
+        #boss_acc[i-2] = BOSS_KNN.accuracy
+
+        ASTRIDE_KNN = SYMBOLS(
+                    X_train, 
+                    X_test, 
+                    'ASTRIDE', 
+                    num_segments=10, 
+                    alphabet_size=i)
+        ASTRIDE_KNN.predict_ASTRIDE()
+        astride_acc[i-2] = ASTRIDE_KNN.accuracy
+
+    np.save('sax_acc.npy', sax_acc)
+    np.save('esax_acc.npy', esax_acc)
+    np.save('tsax_acc.npy', tsax_acc)
+    np.save('oneD_sax_acc.npy', oneD_sax_acc)
+    np.save('sfa_acc.npy', sfa_acc)
+    np.save('boss_acc.npy', boss_acc)
+    np.save('astride_acc.npy', astride_acc)
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(abs_x, sax_acc, color='blue', label="SAX")
+    plt.plot(abs_x, esax_acc, color='red', label="ESAX")
+    plt.plot(abs_x, tsax_acc, color='green', label="TSAX")
+    plt.plot(abs_x, oneD_sax_acc, color='purple', label="1D SAX")
+    plt.plot(abs_x, sfa_acc, color='orange', label="SFA")
+    plt.plot(abs_x, boss_acc, color='black', label="BOSS")
+    plt.plot(abs_x, astride_acc, color='brown', label="ASTRIDE")
+    plt.title("Accuracy en fonction de la taille de l'alphabet - 10 segments", fontsize=14)
+    plt.xlabel("Taille de l'alphabet", fontsize=12)
+    plt.ylabel("Accuracy", fontsize=12)
+    plt.legend(loc='best', fontsize=10)
+    plt.grid(True)
+    plt.show()
 
 
 
