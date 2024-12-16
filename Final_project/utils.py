@@ -78,7 +78,7 @@ def generate_data(type="ECG200"):
     elif type == "computers":
         train_path = os.path.join(os.getcwd(), "datasets/classification/Computers/Computers_TRAIN.ts")
         test_path = os.path.join(os.getcwd(), "datasets/classification/Computers/Computers_TEST.ts")
-    elif type == "Adiac":
+    elif type == "adiac":
         train_path = os.path.join(os.getcwd(), "datasets/classification/Adiac/Adiac_TRAIN.ts")
         test_path = os.path.join(os.getcwd(), "datasets/classification/Adiac/Adiac_TEST.ts")
 
@@ -98,7 +98,7 @@ def generate_data(type="ECG200"):
     X_test.columns = list(X_test.columns[:-1]) + ['label']
     x_test, y_test = X_test.iloc[:, :-1], X_test["label"]
 
-    return x_train, y_train, x_test, y_test
+    return X_train, x_train, y_train, X_test, x_test, y_test
 
 ##########################################################################################################################
 ####################################################### UTILS FUNC #######################################################
@@ -151,7 +151,7 @@ def plot_classes(df0, df1, num_seg):
     if num_seg is not None:
         for i in range(num_seg+1):
             axes[0].axvline(x= i * (len(mean_series1.index) // num_seg), color="red", linestyle="--", alpha=0.7)
-    axes[0].set_title("Ischemia heartbeat - moyenne avec IC 95%", fontsize=14)
+    axes[0].set_title("Classe 1", fontsize=14)
     axes[0].set_xlabel("Index", fontsize=12)
     axes[0].set_ylabel("Valeur", fontsize=12)
     axes[0].legend()
@@ -162,13 +162,73 @@ def plot_classes(df0, df1, num_seg):
     if num_seg is not None:
         for i in range(num_seg+1):
             axes[1].axvline(x= i * (len(mean_series0.index) // num_seg), color="red", linestyle="--", alpha=0.7)
-    axes[1].set_title("Normal heartbeat - moyenne avec IC 95%", fontsize=14)
+    axes[1].set_title("Classe 2", fontsize=14)
     axes[1].set_xlabel("Index", fontsize=12)
     axes[1].set_ylabel("Valeur", fontsize=12)
     axes[1].legend()
 
     # Ajuster l'espacement entre les subplots
     plt.tight_layout()
+    plt.show()
+
+
+def plot_classes_multisubplots(data, num_classes, num_seg=None):
+    """
+    Plot multiple classes in subplots with confidence intervals.
+    
+    Parameters:
+    - data: DataFrame contenant les données avec une colonne "label" indiquant les classes.
+    - num_classes: Nombre total de classes dans les données.
+    - num_seg: Nombre de segments pour ajouter des lignes verticales (optionnel).
+    """
+    # Vérifier que les colonnes autres que "label" contiennent des données numériques
+    numeric_columns = data.columns.difference(['label'])
+    data[numeric_columns] = data[numeric_columns].apply(pd.to_numeric, errors='coerce')
+    
+    # Remplacer les NaN par 0 (ou appliquer une autre stratégie si nécessaire)
+    data[numeric_columns] = data[numeric_columns].fillna(0)
+
+    # Créer une grille de subplots
+    num_rows = (num_classes // 6) + (1 if num_classes % 6 != 0 else 0)  # 6 colonnes par ligne
+    num_cols = 6  # Nombre maximum de colonnes
+    fig, axes = plt.subplots(num_rows, num_cols, figsize=(20, num_rows * 4), constrained_layout=True)
+    axes = axes.ravel()  # Aplatir les subplots pour une gestion plus simple
+
+    # Itérer sur chaque classe
+    for i in range(num_classes):
+        ax = axes[i]
+        # Filtrer les données pour la classe actuelle
+        df_class = data[data["label"] == i + 1].iloc[:, :-1]  # Exclure la colonne "label"
+        
+        # Convertir en numérique et gérer les NaN (déjà fait, mais peut être rappelé ici si nécessaire)
+        df_class = df_class.apply(pd.to_numeric, errors='coerce').fillna(0)
+
+        # Calculer la moyenne et les intervalles de confiance
+        mean_series = df_class.mean(axis=0)
+        ci_low = mean_series - 1.96 * df_class.sem(axis=0)
+        ci_high = mean_series + 1.96 * df_class.sem(axis=0)
+
+        # Traçage de la moyenne et des intervalles de confiance
+        sns.lineplot(ax=ax, x=mean_series.index, y=mean_series, label=f"Classe {i + 1}", color="blue")
+        ax.fill_between(mean_series.index, ci_low, ci_high, color="blue", alpha=0.2, label="IC 95%")
+        
+        # Ajouter des segments verticaux si `num_seg` est défini
+        if num_seg is not None:
+            for j in range(num_seg + 1):
+                ax.axvline(x=j * (len(mean_series.index) // num_seg), color="red", linestyle="--", alpha=0.7)
+        
+        # Ajouter des titres et des légendes
+        ax.set_title(f"Classe {i + 1}", fontsize=12)
+        ax.set_xlabel("Index", fontsize=10)
+        ax.set_ylabel("Valeur", fontsize=10)
+        ax.legend(fontsize=8)
+
+    # Supprimer les subplots inutilisés si num_classes < num_rows * num_cols
+    for j in range(num_classes, len(axes)):
+        fig.delaxes(axes[j])
+
+    # Ajouter un titre global
+    fig.suptitle("Visualisation des classes", fontsize=16)
     plt.show()
 
 
