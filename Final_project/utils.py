@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from Symbol import SYMBOLS
 import os
+from matplotlib import cm
 
 ##########################################################################################################################
 ###################################################### DATA LOADING ######################################################
