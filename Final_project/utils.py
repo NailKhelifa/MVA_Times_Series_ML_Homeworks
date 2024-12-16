@@ -389,7 +389,7 @@ def plot_3D(x_axis, y_axis, z_axis, title, x_label, y_label, z_label):
 
 def plot_recons(TS_test, r1, r2, r3, r4, method): 
     
-    plt.figure(figsize=(8, 5))
+    plt.figure(figsize=(12, 6))
     plt.plot(np.array(TS_test), color='blue', label="Série Initiale")
     plt.plot(r1, color='red', label=f"Reconstruction from {method} - 10 segments, 4 symboles")
     plt.plot(r2, color='orange', label=f"Reconstruction from {method} - 20 segments, 4 symboles")

@@ -112,6 +112,7 @@ class SYMBOLS():
             elif self.method == "oneD_SAX":
                 symbolic_seq = sax_trans.transf_1d_sax(self.Na, self.Ns)
                 
+                
                 if len(symbolic_seq) != self.num_segments:
                     raise ValueError(f"La taille de symbolic_seq ({len(symbolic_seq)}) "
                                 f"ne correspond pas à num_segments ({self.Na + self.Ns})")
@@ -126,7 +127,7 @@ class SYMBOLS():
             else:
                 if type(train_symbolic_data) == np.ndarray:
                     train_symbolic_data = pd.DataFrame(np.zeros((self.num_train_samples, 1)))
-                train_symbolic_data.iloc[i, :] = symbolic_seq
+                train_symbolic_data[i] = symbolic_seq
 
         ## symbolize the test time series 
         for i in range(self.num_test_samples):
