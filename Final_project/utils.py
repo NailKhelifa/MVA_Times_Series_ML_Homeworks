@@ -486,7 +486,7 @@ def plot_3D(x_axis, y_axis, z_axis, title, x_label, y_label, z_label):
     fig = plt.figure(figsize=(12, 8))
     ax = fig.add_subplot(111, projection='3d')
 
-    colors = cm.coolwarm(dz / dz.max())  # Normaliser les hauteurs (dz) pour utiliser la colormap
+    colors = cm.coolwarm(dz / dz.max())
 
     ax.bar3d(x_flat, y_flat, z_flat, dx, dy, dz, shade=True, color=colors, edgecolor='black', alpha=0.9)
 

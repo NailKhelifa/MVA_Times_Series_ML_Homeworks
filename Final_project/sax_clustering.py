@@ -19,7 +19,7 @@ def k_means_sax(sax, max_iter, num_cluster):
         - La distance intra-cluster moyenne (float).
         - La distance inter-cluster moyenne (float).
     """
-    data = sax.symbolized_x_train
+    data = sax.symbolized_x_train.iloc[1,:]
 
     # Choix de la mesure de distance
     if sax.method == "TSAX":
@@ -63,9 +63,9 @@ def k_means_sax(sax, max_iter, num_cluster):
                     distance_sum = 0
                     for other_idx in cluster_indices:
                         if sax.method == "TSAX":
-                            distance_sum += dist.tsax_mindist(data.iloc[idx, :][0], data.iloc[other_idx, :][0])
+                            distance_sum += dist.tsax_mindist(data.iloc[idx], data.iloc[other_idx])
                         else:
-                            distance_sum += dist.mindist(data.iloc[idx, :][0], data.iloc[other_idx, :][0])
+                            distance_sum += dist.mindist(data.iloc[idx], data.iloc[other_idx])
                     # Mettre à jour le point central si une plus petite somme est trouvée
                     if distance_sum < min_distance_sum:
                         min_distance_sum = distance_sum
@@ -89,9 +89,9 @@ def k_means_sax(sax, max_iter, num_cluster):
         cluster_indices = np.where(labels == k)[0]
         for idx in cluster_indices:
             if sax.method == "TSAX":
-                intra_cluster_distances.append(dist.tsax_mindist(data.iloc[idx, :][0], data.iloc[centroids[k], :][0]))
+                intra_cluster_distances.append(dist.tsax_mindist(data.iloc[idx], data.iloc[centroids[k]]))
             else:
-                intra_cluster_distances.append(dist.mindist(data.iloc[idx, :][0], data.iloc[centroids[k], :][0]))
+                intra_cluster_distances.append(dist.mindist(data.iloc[idx], data.iloc[centroids[k]]))
     intra_cluster_mean_distance = np.mean(intra_cluster_distances) if intra_cluster_distances else 0.0
 
     # Calcul de la distance inter-cluster moyenne
@@ -100,11 +100,11 @@ def k_means_sax(sax, max_iter, num_cluster):
         for j in range(i + 1, num_cluster):
             if sax.method == "TSAX":
                 inter_cluster_distances.append(
-                    dist.tsax_mindist(data.iloc[centroids[i], :][0], data.iloc[centroids[j], :][0])
+                    dist.tsax_mindist(data.iloc[centroids[i]], data.iloc[centroids[j]])
                 )
             else:
                 inter_cluster_distances.append(
-                    dist.mindist(data.iloc[centroids[i], :][0], data.iloc[centroids[j], :][0])
+                    dist.mindist(data.iloc[centroids[i]], data.iloc[centroids[j]])
                 )
     inter_cluster_mean_distance = np.mean(inter_cluster_distances) if inter_cluster_distances else 0.0
 
